@@ -1,0 +1,12 @@
+{% extends "index.html" %}
+
+{% block contentido %}
+
+<h2> LIBROS </h2>
+<ol> {% for prestamo in prestamos %}
+    <li> {{ prestamo.titulo }} </li><br>
+    <li> {{ prestamo.usuario }} </li><br>
+    <li> {{ prestamo.fecha_prestamo }} </li>
+    {% endfor %}
+</ol>
+{% endblock %}

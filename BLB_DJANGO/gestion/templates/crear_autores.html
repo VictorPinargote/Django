@@ -1,0 +1,21 @@
+{% extends "index.html" %}
+
+<!-- Seccion de autores -->
+{% block contentido %}
+    <h2> Crear Autor </h2>
+
+<form method="POST">
+    <!-- es para uqe no se cree un bot y que no haya un sistema se llanado auto de datos -->
+    {% csrf_token %} 
+    <label for="id_nombre" name="nombre">Nombre:</label>
+    <input placeholder="nombre" type="text" id="id_nombre" name="nombre" required><br><br>
+
+    <label for="id_apellido" name="apellido">Apellido:</label>
+    <input type="text" id="id_apellido" name="apellido" required><br><br>
+
+    <label for="id_bibliografia" name="bibliografia">Bibliografía:</label>
+    <input type="text" id="id_apellido" name="apellido" required><br><br>
+
+    <button type="submit" class="btn btn-primary">Crear Autor</button>
+</form>
+{% endblock %}

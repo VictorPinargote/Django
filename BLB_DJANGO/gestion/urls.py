@@ -13,8 +13,8 @@ urlpatterns = [
     path('autores/nuevo/', crear_autor, name='crear_autor'),
     
     #prestamos
-    path('prestamos/', lista_prestamos, name='lista_prestamos'),
-    path('prestamos/nuevo/', crear_prestamo, name="crear_prestamo"),
+    path('prestamos/', lista_prestamo, name='lista_prestamo'),
+    path('prestamos/nuevo/', lista_crear_prestamo, name="crear_prestamo"),
     path('prestamos/<int:id>/', detalle_prestamo, name='detalle_prestamo'),
     
     #multas

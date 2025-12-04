@@ -127,11 +127,11 @@
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center">
-                    <li class="nav-item"><a class="nav-link active" href="#">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Libros</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Autores</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Préstamos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Multas</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_libros' %}">Libros</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_autores' %}">Autores</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_prestamo' %}">Préstamos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_multas' %}">Multas</a></li>
                     <li class="nav-item ms-2">
                         <a href="#" class="btn btn-custom btn-sm">Login</a>
                     </li>

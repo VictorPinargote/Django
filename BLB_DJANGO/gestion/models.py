@@ -90,7 +90,7 @@ class multa(models.Model):
     def save(self, *args, **kwargs): #que es args y kwgars????
         if self.tipo == 'p' and self.monto == 0:
             self.monto = self.multa_retraso
-        super().save('*args **kwargs') ##QUE HACE EL SUPER??? el super como la funcion save es una funcion propia de django, y la estamso reescribiendo, el super lo que va a
+        super().save(*args, **kwargs) ##QUE HACE EL SUPER??? el super como la funcion save es una funcion propia de django, y la estamso reescribiendo, el super lo que va a
         #hacer es llamar a la funcion padre, o original y ejecutarla, entonces lo que hace es que aparte de lo que definimos nosotros va a usar la funcion
         #original
         #EXPLICAR ESTA FUNCION?????????????????????????????????????????????????????????
