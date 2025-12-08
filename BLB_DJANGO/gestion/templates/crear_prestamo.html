@@ -7,15 +7,25 @@
 <form method="POST">
     <!-- es para uqe no se cree un bot y que no haya un sistema se llenado automatico de datos -->
     {% csrf_token %} 
-    <label for="id_nombre" name="nombre">Nombre:</label>
-    <input placeholder="nombre" type="text" id="id_nombre" name="nombre" required><br><br>
+    <label for="id_nombre" name="libro">libro:</label>
+    <select type="text" id="id_libro" name="libro" required><br>
+        <option value="">libro</option>
+        {% for libro in libros %}
+            <option value="{{ libro.id }}">{{ libro.titulo }}</option>
+        {% endfor %}
+    </select>
 
-    <label for="id_apellido" name="apellido">Apellido:</label>
-    <input type="text" id="id_apellido" name="apellido" required><br><br>
+    <label for="id_usuario" name="autor">Usuario:</label>
+    <select type="text" id="id_usuario" name="usuario" required><br>
+        <option value="">Seleccionar Usuario--</option>
+        {% for usuario in usuarios %}
+            <option value="{{ usuario.id }}">{{ usuario.username }}</option>
+        {% endfor %}
+    </select>
 
-    <label for="id_bibliografia" name="bibliografia">Bibliografía:</label>
-    <input type="text" id="id_apellido" name="apellido" required><br><br>
+    <label for="id_bibliografia" name="bibliografia">fecha_prestamo:</label>
+    <input type="date" id="id_fecha_prestamo" name="fecha_prestamo" value="{{ fecha }}" required><br><br>
 
-    <button type="submit" class="btn btn-primary">Crear Prestamo</button>
+    <button type="submit" class="btn btn-primary">Crear</button>
 </form>
 {% endblock %}

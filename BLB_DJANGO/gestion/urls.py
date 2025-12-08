@@ -4,13 +4,14 @@ from .views import *
 urlpatterns = [
     path('', index, name='index'),
     
-    #libors
+    #libros
     path('libros/', lista_libros, name='lista_libros'),
     path('libros/nuevo/', crear_libro, name='crear_libro'),
     
     #autores
     path('autores/', lista_autores, name='lista_autores'),
     path('autores/nuevo/', crear_autor, name='crear_autor'),
+    path('autores/<int:id>/editar/', crear_autor, name='editar_autor'),
     
     #prestamos
     path('prestamos/', lista_prestamo, name='lista_prestamo'),
@@ -20,6 +21,5 @@ urlpatterns = [
     #multas
     path('multas/', lista_multas, name='lista_multas'),
     path('multas/nuevo/<int:prestamo_id>', crear_multa, name='crear_multa'),
-    
     
 ]

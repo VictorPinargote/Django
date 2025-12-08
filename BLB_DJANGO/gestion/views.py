@@ -9,7 +9,7 @@ from django.conf import settings
 def index(request):
     title = settings.TITLE
     
-    return render(request, 'gestion/templates/index.html', {'titulo': title})
+    return render(request, 'gestion/templates/home.html', {'titulo': title})
 
 def lista_libros(request):
     libros = Libro.objects.all()
@@ -42,15 +42,30 @@ def lista_autores(request):
     autores = Autor.objects.all()
     return render(request, 'gestion/templates/autores.html', {'autores': autores})
 
-def crear_autor(request):
+def crear_autor(request, id=None):
+    if id == None:  # Crear nuevo autor
+        autor = None
+        modo = 'Crear'
+    else:  # Editar autor existente
+        autor = get_object_or_404(Autor, id=id)
+        modo = 'Editar'
+        
     if request.method == 'POST': #si ya envia datos y captura en variabes para poder crear el autor
         nombre = request.POST.get('nombre')
         apellido = request.POST.get('apellido')
         bibliografia = request.POST.get('bibliografia')
-        Autor.objects.create(nombre=nombre, apellido=apellido, bibliografia=bibliografia)
+        if autor == None:
+            Autor.objects.create(nombre=nombre, apellido=apellido, bibliografia=bibliografia)
+        else:
+            autor.nombre = nombre
+            autor.apellido = apellido
+            autor.bibliografia = bibliografia
+            autor.save()
         return redirect('lista_autores')
-        
-    return render(request, 'gestion/templates/crear_autores.html')
+    context = {'autor': autor,
+               'titulo': 'editar autor' if modo == 'editar' else 'crear autor',
+               'texto_boton': 'Guardar cambios' if modo == 'editar' else 'Crear'}
+    return render(request, 'gestion/templates/crear_autor.html', context)
 
 def lista_multas(request):
     multas = multa.objects.all()
@@ -62,3 +77,38 @@ def crear_multa(request, prestamo_id):
 def detalle_prestamo(request, id):
     pass
 
+def crear_prestamo(request):
+    libro = Libro.objects.filter(disponible=True)
+    usuarios = User.objects.all()
+    if request.method == 'POST':
+        libro_id = request.POST.get('libro')
+        usuario_id = request.POST.get('usuario')
+        fecha_prestamo = request.POST.get('fecha_prestamo')
+        if libro_id and usuario_id and fecha_prestamo:
+            libro = get_object_or_404(Libro, id=libro_id)
+            usuario = get_object_or_404(User, id=usuario_id)
+            prestamo = Prestamo.objects.create(libro=libro, 
+                                               usuario=usuario, 
+                                               fecha_prestamo=fecha_prestamo)
+            libro.disponible = False
+            libro.save()
+            return redirect('lista_prestamo', id=prestamo.id)
+    fecha = (timezone.now()).date().isoformat() #este se captura l aparte de al fehc actual
+    return render(request, 'gestion/templates/crear_prestamo.html', {'libros': libro, 
+                                                                     'usuarios': usuarios})
+
+def editar_autor(request, id):
+    autor = get_object_or_404(Autor, id=id)
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        apellido = request.POST.get('apellido')
+        bibliografia = request.POST.get('bibliografia')
+        
+        if nombre and apellido:
+            autor.apellido = apellido
+            autor.nombre = nombre
+            autor.bibliografia = bibliografia
+            autor.save()
+            return redirect('lista_autores')
+    
+    return render(request, 'gestion/templates/editar_autor.html', {'autor': autor})

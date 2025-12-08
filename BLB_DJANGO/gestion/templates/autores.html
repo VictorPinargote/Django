@@ -7,4 +7,29 @@
     <li> {{ autor.nombre }} {{ autor.apellido }} </li>
     {% endfor %}
 </ul>
+
+<table style="width:100%" class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Bibliografía</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for autor in autores %}
+        <tr>
+            <td>{{ autor.nombre }}</td>
+            <td>{{ autor.apellido }}</td>
+            <td>{{ autor.bibliografia }}</td>
+            <td>
+                <a href="{% url 'editar_autor' autor.id %}">Editar</a>
+            </td>
+        </tr>  
+        {% endfor %}
+    </tbody>
+<table>
+
+
 {% endblock %}

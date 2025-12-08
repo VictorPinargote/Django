@@ -26,7 +26,7 @@ MULTA = 5
 SECRET_KEY = 'django-insecure-vg__@l&(lo=5+=obq^q5z*!vivga1j5w6fx$e(lt@+yqn(zr(#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.26.1.26', 'perdr']
 # Application definition

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,36 +10,32 @@
 
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-            --secondary-gradient: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --glass-bg: rgba(255, 255, 255, 0.95);
             --card-hover: translateY(-5px);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
-            min-height: 100vh;
+            background-color: #f4f6f9;
         }
 
         /* Menú Personalizado Elegante */
         .navbar {
-            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            background: var(--glass-bg);
             backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.4);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             padding: 1rem 0;
-            border-bottom: 3px solid #1e40af;
         }
 
         .navbar-brand {
             font-weight: 700;
-            color: #fff !important;
+            color: #764ba2 !important;
             font-size: 1.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .nav-link {
-            color: rgba(255, 255, 255, 0.85) !important;
+            color: #555 !important;
             font-weight: 500;
             margin: 0 10px;
             transition: all 0.3s ease;
@@ -48,7 +43,7 @@
         }
 
         .nav-link:hover, .nav-link.active {
-            color: #60a5fa !important;
+            color: #764ba2 !important;
         }
 
         /* Efecto de subrayado en el menú */
@@ -56,8 +51,8 @@
             content: '';
             display: block;
             width: 0;
-            height: 3px;
-            background: #60a5fa;
+            height: 2px;
+            background: #764ba2;
             transition: width .3s;
         }
 
@@ -67,168 +62,55 @@
 
         /* Hero Section */
         .hero-section {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+            background: var(--primary-gradient);
             color: white;
             padding: 80px 0;
             border-radius: 0 0 50px 50px;
             margin-bottom: 50px;
-            box-shadow: 0 15px 40px rgba(30, 58, 138, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,40 Q300,20 600,40 T1200,40 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.08)"/></svg>');
-            background-size: cover;
-            opacity: 0.3;
-        }
-
-        .hero-section > * {
-            position: relative;
-            z-index: 1;
         }
 
         /* Tarjetas (Cards) */
         .stat-card {
             border: none;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(30, 58, 138, 0.12);
-            transition: all 0.4s ease;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
             overflow: hidden;
             height: 100%;
-            background: white;
-            border-top: 5px solid transparent;
-            position: relative;
-        }
-
-        .stat-card:nth-child(1) {
-            border-top-color: #1e40af;
-        }
-
-        .stat-card:nth-child(2) {
-            border-top-color: #0369a1;
-        }
-
-        .stat-card:nth-child(3) {
-            border-top-color: #7c2d12;
-        }
-
-        .stat-card:nth-child(4) {
-            border-top-color: #7f1d1d;
         }
 
         .stat-card:hover {
             transform: var(--card-hover);
-            box-shadow: 0 20px 40px rgba(30, 58, 138, 0.2);
-        }
-
-        .stat-card .card-body {
-            padding: 1.5rem;
-        }
-
-        .stat-card h5 {
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
-        }
-
-        .stat-card h3 {
-            color: #1e40af;
-            font-size: 2rem;
-            font-weight: 700;
+            box-shadow: 0 15px 30px rgba(118, 75, 162, 0.2);
         }
 
         .icon-box {
-            width: 70px;
-            height: 70px;
-            border-radius: 15px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.5rem;
             margin-bottom: 1rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.12);
         }
 
         /* Colores específicos para cada sección */
-        .bg-books { 
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
-            color: #1e40af; 
-        }
-        .bg-authors { 
-            background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); 
-            color: #0369a1; 
-        }
-        .bg-loans { 
-            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); 
-            color: #7c2d12; 
-        }
-        .bg-fines { 
-            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%); 
-            color: #7f1d1d; 
-        }
+        .bg-books { background-color: #e0e7ff; color: #4338ca; }
+        .bg-authors { background-color: #d1fae5; color: #047857; }
+        .bg-loans { background-color: #ffedd5; color: #c2410c; }
+        .bg-fines { background-color: #fee2e2; color: #b91c1c; }
 
         .btn-custom {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            background: #764ba2;
             color: white;
             border-radius: 25px;
             padding: 8px 25px;
             transition: all 0.3s;
-            border: none;
-            font-weight: 600;
         }
-
         .btn-custom:hover {
-            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            background: #5b3785;
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.5);
-        }
-
-        /* Tabla de Préstamos Recientes */
-        .card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
-            color: white !important;
-            border-bottom: none !important;
-        }
-
-        .card-header h5 {
-            color: white !important;
-        }
-
-        .table-hover tbody tr:hover {
-            background-color: rgba(30, 58, 138, 0.08);
-        }
-
-        /* Footer */
-        footer {
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            color: #d1d5db !important;
-            margin-top: 60px;
-        }
-
-        footer small {
-            color: #e5e7eb !important;
-        }
-
-        /* Badges */
-        .badge {
-            padding: 0.5rem 1rem;
-            font-weight: 600;
-            border-radius: 50px;
         }
     </style>
 </head>
@@ -244,11 +126,11 @@
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center">
-                    <li class="nav-item"><a class="nav-link active" href="">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_libros' %}">Libros</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_autores' %}">Autores</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_prestamo' %}">Préstamos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_multas' %}">Multas</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Libros</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Autores</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Préstamos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Multas</a></li>
                     <li class="nav-item ms-2">
                         <a href="#" class="btn btn-custom btn-sm">Login</a>
                     </li>
@@ -266,7 +148,63 @@
 
     <main class="container mb-5">
         <div class="row g-4">
-            {% block contentido %}{% endblock %}
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card p-4">
+                    <div class="card-body text-center">
+                        <div class="icon-box bg-books mx-auto">
+                            <i class="bi bi-journal-richtext"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Libros</h5>
+                        <p class="card-text text-muted">Gestión de inventario y catálogo.</p>
+                        <h3 class="fw-bold mb-3">1,240</h3>
+                        <a href="#" class="btn btn-outline-primary w-100 rounded-pill">Ver Catálogo</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card p-4">
+                    <div class="card-body text-center">
+                        <div class="icon-box bg-authors mx-auto">
+                            <i class="bi bi-person-lines-fill"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Autores</h5>
+                        <p class="card-text text-muted">Registro de escritores y biografías.</p>
+                        <h3 class="fw-bold mb-3">350</h3>
+                        <a href="#" class="btn btn-outline-success w-100 rounded-pill">Ver Autores</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card p-4">
+                    <div class="card-body text-center">
+                        <div class="icon-box bg-loans mx-auto">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Préstamos</h5>
+                        <p class="card-text text-muted">Control de salidas y devoluciones.</p>
+                        <h3 class="fw-bold mb-3">45</h3>
+                        <a href="#" class="btn btn-outline-warning w-100 rounded-pill">Gestionar</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card p-4">
+                    <div class="card-body text-center">
+                        <div class="icon-box bg-fines mx-auto">
+                            <i class="bi bi-exclamation-octagon"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Multas</h5>
+                        <p class="card-text text-muted">Sanciones y pagos pendientes.</p>
+                        <h3 class="fw-bold mb-3">$120.00</h3>
+                        <a href="#" class="btn btn-outline-danger w-100 rounded-pill">Ver Reporte</a>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div class="row mt-5">
