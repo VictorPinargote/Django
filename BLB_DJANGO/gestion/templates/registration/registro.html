@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+<h2>Registro de ususario</h2>
+
+<form method == 'POST'>
+{{ form.non_field_errros }}
+
+    {% csrf_token %}
+    {{  form.as_p  }}
+    
+    <button type="submit">Crear</button>
+
+</form>
+
+{% endblock %}

@@ -1,44 +1,56 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+
 # Create your models here.
-class Autor(models.Model): #parecido a django, 
-#aca ya no necesitamos eso del guion bajo name, description nada de eso
-    nombre = models.CharField(max_length=50) #models es tipo texto y tiene un maximo de caracteres de 50
-    apellido = models.CharField(max_length=50) #lo mismo pero para apellido
+
+#clases
+    #definir los campos para la clase con sus tipos (ejm: charfield, integerfield, datefield, booleanfield, etc)
+    #para tipo texto usar (models.charfied) o texto largo (models.textfield)
+    #atributos de charfield:
+    # max_length=n para definir la longitud maxima,
+    # blank=True, null=True (para que no sean obligatorios), 
+    # unique=True (para que no se repitan)
+
+class Autor(models.Model):
+    nombre = models.CharField(max_length=50)
+    apellido = models.CharField(max_length=50)
     bibliografia = models.CharField(max_length=200, blank=True, null=True)
-#HAY QUE QUE ELEGIR CUAL VA A SER EL "NAME" por asi decir, el que sea el nombre o representante de la clase o objeto. en odoo usabamos el recname
-#o el display name, aca en django lo que ahcemos es lo siguiente
-    def __str__(self): #por que se pone __ ?????????????????????????????????????????????????????
-        return f"{self.nombre} {self.apellido}" #aca nos va a devolver como NOMBRE DEL OBJETO el nombre, espacio apellido
     
-class Libro(models.Model): #clase para el libro
+    # definir el nombre del objeto osea el que se va a mostrar cuando se consulte un objeto de esta clase
+    def __str__(self): #definimos que sea tipo string
+        return f"{self.nombre} {self.apellido}" 
+    
+class Libro(models.Model):
     titulo = models.CharField(max_length=20)
-    #ACA TENEMOOS QUE HACER UNA RELACION, ACA NO HAY MANY2ONE COMO EN ODOO, ACA SE DEFINE DE UNA CON FOREIGN KEY, LO VOLVEMOS LALVE FORANEA
-    autor = models.ForeignKey(Autor, related_name="libros", on_delete=models.PROTECT) #TAMBIEN DEBEMOS DEFINIR DE QUIEN ES LA LALVE FORANEA, en este caso de autor, tambien hay que
-    #definir un related name
-    #siempre en una foreign key hay que poner el ON DELETE, es decirle que hacer cuando alguien queira borrarlo, ya que tiene
-    #relaciones y se podria romper segun lo que haga, digamos si borro el libro, los que tieenen prestado ese libro ya quedarian incompletos en su tabla
-    #y se podrian romper cosas, pr eso hay que definir que hacer al borrar una llave foranea
-    #el ON DELETE PROTECT lo que hace es proteger el registro apra que no sea eliminado
-    #PARA QUE ES EL RELATED NAME???????????????????????????????????????????????????????????????
-    #NUNCA OLVIDAR EL DEF STR
+    #el (models.foreingkey) es para definir una llave foranea, en este caso un libro tiene un autor
+    
+    autor = models.ForeignKey(Autor, related_name="libros", on_delete=models.PROTECT)
+    #related name es para definir el nombre con el que se va a acceder a los libros desde el autor
+    #(on_delete)=models.PROTECT es para definir que pasa si se elimina el autor, en este caso no se puede eliminar si tiene libros asociados
+    
     disponible = models.BooleanField(default=True) #un boolean y por defecto viene acctivado
     def __str__(self):
-        return self.titulo
+        return self.titulo #se usa el titulo del libro como nombre del objeto
     
 class Prestamo(models.Model):
-    libro = models.ForeignKey(Libro, related_name="prestamos", on_delete=models.PROTECT) #llave foranea con la clase de libros, prestamo y libros
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="prestamos", on_delete=models.PROTECT)  #PARA MANEJAR USUARIOS NECESITAMOS IMPORTAR UNA LIBRERIRA, asi "from django.conf import settings" importamos
-    #settins acca, necesitamos el tema del auth
-    #sacamos el auth_user_model, desde donde? desde settings,
-    #QUE HACE EL AUTH USER MODEL ???????????????????????????????????????????????????/
+    # la relacion es muchos a uno, muchos prestamos pueden tener un libro
+    libro = models.ForeignKey(Libro, related_name="prestamos", on_delete=models.PROTECT)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="prestamos", on_delete=models.PROTECT)
+    #PARA MANEJAR USUARIOS NECESITAMOS IMPORTAR UNA LIBRERIRA, asi "from django.conf import settings" importar
+    #settins.AUTH_USER_MODEL, esto nos da el modelo de usuario que esta definido en los settings de django
     fecha_prestamos = models.DateField(default = timezone.now) #TENEMOS QUE IMPORTAR LA LIBRERIA DE TIMEZOMNE "from django.utils import timezone"
     #para fechas hay datetime field, y el date field, uno no usa hora
     fecha_maxima = models.DateField()
     fecha_devolucion = models.DateField(blank=True, null=True)
     #EN DJANGO, POR DEFECTO TODOS LOS CAMPOS QUE QUEREMOS VAN A SER OBLIGATORIOS, aca no hay que poner el required = true, siempre seran obligatorios
     #si quieres que no sean obligatorios hay que poner "blank=True y null=True" asi permite registros blancos y nulos
+    
+    class Meta:
+        permissions = (
+            ("ver_prestamos", "Puede ver prestamos"),
+            ("gestionar_prestamos", "Puede gestionar prestamos"),
+        )
     
     def __str__(self):
         return f"prestamo de {self.libro} a {self.usuario}" #se usan CORCHETES, aca cramos un mensaje para el nombre del objeto
@@ -70,7 +82,7 @@ class Prestamo(models.Model):
 
     #AHORA EL TEMA DE LA MULTA
     
-class multa(models.Model):
+class Multa(models.Model):
     prestamo= models.ForeignKey(Prestamo, related_name="multas", on_delete=models.PROTECT)
     tipo = models.CharField(max_length=10, choices=(
         ('r', 'retraso'), #clave valor

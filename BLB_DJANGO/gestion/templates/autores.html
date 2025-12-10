@@ -3,33 +3,29 @@
 {% block contentido %}
 
 <h2> AUTORES </h2>
-<ul> {% for autor in autores %}
-    <li> {{ autor.nombre }} {{ autor.apellido }} </li>
-    {% endfor %}
-</ul>
-
-<table style="width:100%" class="table table-striped">
-    <thead>
-        <tr>
-            <th>Nombre</th>
-            <th>Apellido</th>
-            <th>Bibliografía</th>
-            <th>Acciones</th>
+    <table style="border: 1px solid">
+        <tr style="border: 1px solid">
+            <td  style="border: 1px solid">Nombre</td>
+            <td  style="border: 1px solid">Apellido</td>
+            <td  style="border: 1px solid">Bibliografía</td>
         </tr>
-    </thead>
-    <tbody>
         {% for autor in autores %}
-        <tr>
-            <td>{{ autor.nombre }}</td>
-            <td>{{ autor.apellido }}</td>
-            <td>{{ autor.bibliografia }}</td>
+        <tr  style="border: 1px solid">
+            <td  style="border: 1px solid">
+                {{ autor.nombre }}
+            </td>
+            <td  style="border: 1px solid">
+                {{ autor.apellido }}
+            </td>
+            <td  style="border: 1px solid">
+                {{ autor.bibliografia}}
+            </td>
             <td>
                 <a href="{% url 'editar_autor' autor.id %}">Editar</a>
             </td>
-        </tr>  
+        </tr>
         {% endfor %}
-    </tbody>
-<table>
 
+    </table>
 
 {% endblock %}

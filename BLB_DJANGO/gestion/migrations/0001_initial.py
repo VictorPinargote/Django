@@ -6,9 +6,7 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-class Migration(migrations.Migration):  #ESTO ES LO QUE CREAMOS CON MIGRATIOS, AL HACER MAKEMIGRATIONS VA A CREAR ESTO QUE ES LA TABLA QUE SE HARIA
-    #EN EL MOTOR DE BASE DE DATOS, Y CUANDO YA HAGO EL MIGRATE ESTA TABLA SE EKKECUTA Y SE CREA, PRIMERO ES EL MAKEMIGRATE, SI ALGO QUIERO C AMBIAR LO AHGO O EDITRA
-    #Y CUANDO YA TE GUSTE LA TABLA HACES MIGRATE
+class Migration(migrations.Migration):
 
     initial = True
 
@@ -39,19 +37,19 @@ class Migration(migrations.Migration):  #ESTO ES LO QUE CREAMOS CON MIGRATIOS, A
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('fecha_prestamos', models.DateField(default=django.utils.timezone.now)),
-                ('fecha_maxima', models.DateField()),
+                ('fecha_max', models.DateField()),
                 ('fecha_devolucion', models.DateField(blank=True, null=True)),
                 ('libro', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='prestamos', to='gestion.libro')),
                 ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='prestamos', to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
-            name='multa',
+            name='Multa',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('tipo', models.CharField(choices=[('r', 'retraso'), ('p', 'perdida'), ('d', 'deterioro')], max_length=10)),
                 ('monto', models.DecimalField(decimal_places=2, default=0, max_digits=3)),
-                ('pagado', models.BooleanField(default=False)),
+                ('pagada', models.BooleanField(default=False)),
                 ('fecha', models.DateField(default=django.utils.timezone.now)),
                 ('prestamo', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='multas', to='gestion.prestamo')),
             ],

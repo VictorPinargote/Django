@@ -2,21 +2,26 @@
 
 <!-- Seccion de autores -->
 {% block contentido %}
-    <h2> Crear Autor </h2>
+
+<h2> Crear libros </h2>
 
 <form method="POST">
-    <!-- es para uqe no se cree un bot y que no haya un sistema se llanado auto de datos -->
-    {% csrf_token %} 
-    <label for="id_titulo" name="titulo">Titulo:</label>
-    <input placeholder="nombre" type="text" id="id_titulo" name="titulo" required><br><br>
+    {% csrf_token %}
+    <label for="id_titulo" name="titulo">Titulo: </label>
+    <input type="text" id="id_titulo" name="titulo" required><br/>
 
-    <label for="id_autor" name="autor">Autor:</label>
+    <label for="id_autor" name="autor">Autor: </label>
     <select id="id_autor" name="autor" required>
-        <option value="" disabled selected>Seleccione un autor</option>
+        <option value="">-- Selecione un autor --</option>
         {% for autor in autores %}
-            <option value="{{ autor.id }}">{{ autor.nombre }} {{ autor.apellido }}</option>
+        <option value="{{ autor.id }}"> 
+            {{ autor.nombre }} - {{ autor.apellido }}
+        </option>
         {% endfor %}
-    </select><br><br>
-    <button type="submit">Crear Libro</button>
+    </select>
+    
+
+    <button type="submit">Guardar</button>
 </form>
+
 {% endblock %}

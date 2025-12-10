@@ -1,8 +1,20 @@
 from django.urls import path
 from .views import *
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('', index, name='index'),
+    path("", index, name="index"),
+    
+    #gestion de usuarios
+    path('login/', auth_views.LoginView.as_view(), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+                                                  
+    #Cambio de contrasena
+    path('password_change/', auth_views.PasswordChangeView.as_view(), name='password_change'),
+    path('password/change/done', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
+    
+    #registro de usuarios
+    path('regsitro', registro, name='registro'),
     
     #libros
     path('libros/', lista_libros, name='lista_libros'),
@@ -10,16 +22,15 @@ urlpatterns = [
     
     #autores
     path('autores/', lista_autores, name='lista_autores'),
-    path('autores/nuevo/', crear_autor, name='crear_autor'),
+    path('autores/nuevo/', crear_autor, name='crear_autores'),
     path('autores/<int:id>/editar/', crear_autor, name='editar_autor'),
     
     #prestamos
-    path('prestamos/', lista_prestamo, name='lista_prestamo'),
-    path('prestamos/nuevo/', lista_crear_prestamo, name="crear_prestamo"),
+    path('prestamos/', lista_prestamo, name='lista_prestamos'),
+    path('prestamos/nuevo/', crear_prestamo, name="crear_prestamo"),
     path('prestamos/<int:id>/', detalle_prestamo, name='detalle_prestamo'),
     
     #multas
-    path('multas/', lista_multas, name='lista_multas'),
-    path('multas/nuevo/<int:prestamo_id>', crear_multa, name='crear_multa'),
-    
+    path('multas/', lista_multas, name='lista_multa'),
+    path('multas/nuevo/<int:prestamo_id>', crear_multa, name="crear_multa"),
 ]
