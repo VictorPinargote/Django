@@ -3,8 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib.auth import login
+from .openlibrary import buscar_libros, buscar_autores
 
 from .models import Autor, Libro, Prestamo, Multa, Perfil
 from .forms import RegistroUsuarioForm
@@ -161,6 +162,35 @@ def crear_multa(request, prestamo_id):
             return redirect('detalle_prestamo', id=prestamo.id)
     return render(request, 'gestion/templates/crear_multa.html', {'prestamo': prestamo})
 
+#API OPENLIBRARY
+def api_buscar_libros(request):
+    query = request.GET.get('q', '')
+    if query:
+        resultados = buscar_libros(query)
 
+        # reiniciar los resultados
+        libros = []
+        for libro in resultados:
+            libros.append({
+                'titulo': libro.get('title', 'Sin título'),
+                'autor': ', '.join(libro.get('author_name', ['Desconocido'])),
+                'año': libro.get('first_publish_year', 'N/A'),
+                'portada': f"https://covers.openlibrary.org/b/id/{libro.get('cover_i', '')}-M.jpg" if libro.get('cover_i') else None
+            })
+        return JsonResponse({'libros': libros})
+    return JsonResponse({'libros': []})
+
+def api_buscar_autores(request):
+    query = request.GET.get('q', '')
+    if query:
+        resultados = buscar_autores(query)
+        autores = []
+        for autor in resultados:
+            autores.append({
+                'nombre': autor.get('name', 'Sin nombre'),
+                'obras': autor.get('work_count', 0),
+            })
+        return JsonResponse({'autores': autores})
+    return JsonResponse({'autores': []})
 
 # Create your views here.

@@ -3,3 +3,5 @@ DJANGO CONTRASEÑA Y USUARIO POR SI NO TE ACUERDAS
 
 USUARIO = "joelp"
 CONTRASEÑA = "joelalvarez18"
+
+contraseña staff = "123456"

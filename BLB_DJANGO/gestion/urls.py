@@ -33,4 +33,8 @@ urlpatterns = [
     #Multas
     path('multas/', lista_multas, name="lista_multas"),
     path('multas/nuevo/<int:prestamo_id>', crear_multa, name="crear_multa"),
+    
+    # API OpenLibrary
+    path('api/libros/', api_buscar_libros, name='api_buscar_libros'),
+    path('api/autores/', api_buscar_autores, name='api_buscar_autores'),
 ]
