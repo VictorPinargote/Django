@@ -37,6 +37,13 @@ urlpatterns = [
     path('multas/<int:multa_id>/pagar/', pagar_multa, name='pagar_multa'),
     path('prestamos/<int:prestamo_id>/renovar/', renovar_prestamo, name='renovar_prestamo'),
     
+    # Solicitudes de Préstamos (Sistema de solicitudes para usuarios normales)
+    path('solicitar-prestamo/', crear_solicitud, name='crear_solicitud'),
+    path('mis-solicitudes/', mis_solicitudes, name='mis_solicitudes'),
+    path('solicitudes/', lista_solicitudes, name='lista_solicitudes'),
+    path('solicitudes/<int:solicitud_id>/aprobar/', aprobar_solicitud, name='aprobar_solicitud'),
+    path('solicitudes/<int:solicitud_id>/rechazar/', rechazar_solicitud, name='rechazar_solicitud'),
+    
     # API OpenLibrary
     path('api/libros/', api_buscar_libros, name='api_buscar_libros'),
     path('api/autores/', api_buscar_autores, name='api_buscar_autores'),

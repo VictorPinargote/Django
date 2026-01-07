@@ -23,7 +23,7 @@ class RegistroUsuarioForm(UserCreationForm):
     ], required=True, initial='usuario')
     
     #código de verificación para roles especiales
-    codigo_rol = forms.CharField(max_length=25, required=False, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    codigo_rol = forms.CharField(max_length=25, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa el código de verificación'}))
 
     class Meta:
         model = User

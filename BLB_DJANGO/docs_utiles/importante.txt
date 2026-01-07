@@ -4,4 +4,23 @@ DJANGO CONTRASEÑA Y USUARIO POR SI NO TE ACUERDAS
 USUARIO = "joelp"
 CONTRASEÑA = "joelalvarez18"
 
-contraseña staff = "123456"
+=====================================================
+SISTEMA DE ROLES - CÓDIGOS DE VERIFICACIÓN
+=====================================================
+
+| ROL           | CÓDIGO        | PERMISOS                                     |
+|---------------|---------------|----------------------------------------------|
+| Usuario       | (no requiere) | Ver todo, pagar SUS multas                   |
+| Bodeguero     | bodega123     | Crear/editar libros y autores                |
+| Bibliotecario | biblio123     | Gestionar préstamos, devolver libros         |
+| Admin         | admin123      | Ver reportes, gestionar multas, todo lo anterior |
+| Superusuario  | super123      | ACCESO TOTAL a todas las funciones           |
+
+=====================================================
+CÓDIGOS RÁPIDOS
+=====================================================
+Usuario Normal    --> Sin código
+Bodeguero         --> bodega123
+Bibliotecario     --> biblio123
+Administrador     --> admin123
+Superusuario      --> super123

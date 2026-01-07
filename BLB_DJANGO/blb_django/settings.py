@@ -144,3 +144,7 @@ EMAIL_HOST_USER = 'joelpinargote76@gmail.com'
 EMAIL_HOST_PASSWORD = 'tesjgphjtsibfzje'
 
 DEFAULT_FROM_EMAIL = 'BiblioTech <noreply@bibliotech.com>'
+
+# Configuración de archivos media (imágenes de libros, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

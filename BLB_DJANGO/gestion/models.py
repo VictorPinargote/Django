@@ -23,12 +23,13 @@ class Autor(models.Model):
         return f"{self.nombre} {self.apellido}" #devolvemos el nombre y apellido del autor como nombre del objeto
     
 class Libro(models.Model):
-    titulo = models.CharField(max_length=20)
+    titulo = models.CharField(max_length=100)
     #el (models.foreingkey) es para definir una llave foranea, en este caso un libro tiene un autor
     autor = models.ForeignKey(Autor,related_name="libros", on_delete=models.PROTECT)
     #related name es para definir el nombre con el que se va a acceder a los libros desde el autor
     #(on_delete)=models.PROTECT es para definir que pasa si se elimina el autor, en este caso no se puede eliminar si tiene libros asociados
     disponible = models.BooleanField(default=True) #un boolean y por defecto ponerle activado
+    imagen = models.ImageField(upload_to='libros/', blank=True, null=True)  # Imagen del libro
     
     def __str__(self):
         return f"{self.titulo} - {self.autor.nombre} {self.autor.apellido}" #devolvemos el titulo del libro y el nombre del autor como nombre del objeto
@@ -91,7 +92,35 @@ class Multa(models.Model):
         super().save(*args, **kwargs)
 
         
-        #cuano yo voy al registro el monento de crear el ususario debee poder asiganarle el poder gestionar prestamos automaticamnte 
+# =====================================================
+# SISTEMA DE SOLICITUDES DE PRÉSTAMOS
+# =====================================================
+# Los usuarios normales pueden solicitar préstamos
+# Los bibliotecarios y admins pueden aprobar/rechazar
+
+class SolicitudPrestamo(models.Model):
+    ESTADOS = (
+        ('pendiente', 'Pendiente'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    )
+    
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="solicitudes", on_delete=models.CASCADE)
+    libro = models.ForeignKey(Libro, related_name="solicitudes", on_delete=models.PROTECT)
+    dias_solicitados = models.IntegerField(default=7)  # Cuántos días quiere el libro
+    fecha_solicitud = models.DateTimeField(default=timezone.now)
+    estado = models.CharField(max_length=15, choices=ESTADOS, default='pendiente')
+    fecha_respuesta = models.DateTimeField(blank=True, null=True)
+    respondido_por = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="solicitudes_respondidas", 
+                                        on_delete=models.SET_NULL, blank=True, null=True)
+    motivo_rechazo = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"Solicitud de {self.usuario.username} - {self.libro.titulo} ({self.get_estado_display()})"
+    
+    class Meta:
+        ordering = ['-fecha_solicitud']  # Las más recientes primero
+
 
 class Perfil(models.Model):
     ROLES = (
@@ -109,6 +138,3 @@ class Perfil(models.Model):
     
     def __str__(self):
         return f"{self.usuario.username} - {self.get_rol_display()}"
-    
-    
-# usar imagenes estaticas de libros 

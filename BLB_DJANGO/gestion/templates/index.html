@@ -149,6 +149,32 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'lista_autores' %}">Autores</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'lista_prestamos' %}">Préstamos</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'lista_multas' %}">Multas</a></li>
+
+                    {% if user.is_authenticated %}
+                    <!-- Menú de Solicitudes -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-journal-bookmark me-1"></i>Solicitudes
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'crear_solicitud' %}">
+                                    <i class="bi bi-plus-circle me-2"></i>Solicitar Préstamo
+                                </a></li>
+                            <li><a class="dropdown-item" href="{% url 'mis_solicitudes' %}">
+                                    <i class="bi bi-list-check me-2"></i>Mis Solicitudes
+                                </a></li>
+                            {% if user.is_staff %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'lista_solicitudes' %}">
+                                    <i class="bi bi-gear me-2"></i>Gestionar Solicitudes
+                                </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
                     {% if not user.is_authenticated %}
                     <li class="nav-item ms-2">
                         <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>

@@ -8,11 +8,12 @@ from django.contrib.auth import login
 from functools import wraps
 from .openlibrary import buscar_libros, buscar_autores
 
-from .models import Autor, Libro, Prestamo, Multa, Perfil
+from .models import Autor, Libro, Prestamo, Multa, Perfil, SolicitudPrestamo
 from .forms import RegistroUsuarioForm
+from datetime import timedelta
 
 # ============================================
-# SISTEMA DE PERMISOS POR ROLES
+# SISTEMA DE PERMISOS HECHO PARA LOS USUARIOS POR ROLES
 # ============================================
 # Roles: usuario, bodeguero, bibliotecario, admin, superusuario
 # - usuario: Ver todo, pagar SUS multas, solicitar préstamos
@@ -302,6 +303,129 @@ def api_buscar_autores(request):
         return JsonResponse({'autores': autores})
     return JsonResponse({'autores': []})
 
-# Create your views here.
+# =====================================================
+# SISTEMA DE SOLICITUDES DE PRÉSTAMOS
+# =====================================================
 
-# usar el permission_required para proteger las vistas
+@login_required
+def crear_solicitud(request):
+    """Vista para que usuarios normales soliciten un préstamo"""
+    # Obtener libros disponibles
+    libros_disponibles = Libro.objects.filter(disponible=True)
+    
+    if request.method == 'POST':
+        libro_id = request.POST.get('libro')
+        dias = request.POST.get('dias', 7)
+        
+        if libro_id:
+            libro = get_object_or_404(Libro, id=libro_id)
+            
+            # Verificar que el libro esté disponible
+            if not libro.disponible:
+                return render(request, 'gestion/templates/crear_solicitud.html', {
+                    'libros': libros_disponibles,
+                    'error': 'Este libro ya no está disponible'
+                })
+            
+            # Verificar que no tenga una solicitud pendiente para el mismo libro
+            solicitud_existente = SolicitudPrestamo.objects.filter(
+                usuario=request.user,
+                libro=libro,
+                estado='pendiente'
+            ).exists()
+            
+            if solicitud_existente:
+                return render(request, 'gestion/templates/crear_solicitud.html', {
+                    'libros': libros_disponibles,
+                    'error': 'Ya tienes una solicitud pendiente para este libro'
+                })
+            
+            # Crear la solicitud
+            SolicitudPrestamo.objects.create(
+                usuario=request.user,
+                libro=libro,
+                dias_solicitados=int(dias)
+            )
+            return redirect('mis_solicitudes')
+    
+    return render(request, 'gestion/templates/crear_solicitud.html', {
+        'libros': libros_disponibles
+    })
+
+@login_required
+def mis_solicitudes(request):
+    """Vista para que el usuario vea sus solicitudes"""
+    solicitudes = SolicitudPrestamo.objects.filter(usuario=request.user)
+    return render(request, 'gestion/templates/mis_solicitudes.html', {
+        'solicitudes': solicitudes
+    })
+
+@requiere_rol('bibliotecario', 'admin')
+def lista_solicitudes(request):
+    """Vista para que bibliotecarios/admins vean todas las solicitudes pendientes"""
+    solicitudes_pendientes = SolicitudPrestamo.objects.filter(estado='pendiente')
+    solicitudes_procesadas = SolicitudPrestamo.objects.exclude(estado='pendiente')[:20]
+    
+    return render(request, 'gestion/templates/lista_solicitudes.html', {
+        'solicitudes_pendientes': solicitudes_pendientes,
+        'solicitudes_procesadas': solicitudes_procesadas
+    })
+
+@requiere_rol('bibliotecario', 'admin')
+def aprobar_solicitud(request, solicitud_id):
+    """Vista para aprobar una solicitud y crear el préstamo"""
+    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
+    
+    if solicitud.estado != 'pendiente':
+        return redirect('lista_solicitudes')
+    
+    if request.method == 'POST':
+        # Verificar que el libro sigue disponible
+        if not solicitud.libro.disponible:
+            solicitud.estado = 'rechazada'
+            solicitud.motivo_rechazo = 'El libro ya no está disponible'
+            solicitud.fecha_respuesta = timezone.now()
+            solicitud.respondido_por = request.user
+            solicitud.save()
+            return redirect('lista_solicitudes')
+        
+        # Aprobar la solicitud
+        solicitud.estado = 'aprobada'
+        solicitud.fecha_respuesta = timezone.now()
+        solicitud.respondido_por = request.user
+        solicitud.save()
+        
+        # Crear el préstamo
+        fecha_max = timezone.now().date() + timedelta(days=solicitud.dias_solicitados)
+        prestamo = Prestamo.objects.create(
+            libro=solicitud.libro,
+            usuario=solicitud.usuario,
+            fecha_max=fecha_max
+        )
+        
+        # Marcar libro como no disponible
+        solicitud.libro.disponible = False
+        solicitud.libro.save()
+        
+        return redirect('detalle_prestamo', id=prestamo.id)
+    
+    return redirect('lista_solicitudes')
+
+@requiere_rol('bibliotecario', 'admin')
+def rechazar_solicitud(request, solicitud_id):
+    """Vista para rechazar una solicitud"""
+    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
+    
+    if solicitud.estado != 'pendiente':
+        return redirect('lista_solicitudes')
+    
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo', 'Sin motivo especificado')
+        
+        solicitud.estado = 'rechazada'
+        solicitud.motivo_rechazo = motivo
+        solicitud.fecha_respuesta = timezone.now()
+        solicitud.respondido_por = request.user
+        solicitud.save()
+    
+    return redirect('lista_solicitudes')

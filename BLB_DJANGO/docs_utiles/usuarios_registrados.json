@@ -1,0 +1,36 @@
+{
+    "descripcion": "Registro de usuarios por rol del sistema de biblioteca",
+    "fecha_creacion": "2026-01-07",
+    "roles": {
+        "usuario": {
+            "descripcion": "Usuario Normal - puede ver todo y pagar sus propias multas",
+            "codigo_requerido": null,
+            "usuarios": []
+        },
+        "bodeguero": {
+            "descripcion": "Bodeguero - puede crear y editar libros y autores",
+            "codigo_requerido": "bodega123",
+            "usuarios": []
+        },
+        "bibliotecario": {
+            "descripcion": "Bibliotecario - puede gestionar préstamos y devoluciones",
+            "codigo_requerido": "biblio123",
+            "usuarios": []
+        },
+        "admin": {
+            "descripcion": "Administrador - puede ver reportes y gestionar multas",
+            "codigo_requerido": "admin123",
+            "usuarios": []
+        },
+        "superusuario": {
+            "descripcion": "Superusuario - acceso total al sistema",
+            "codigo_requerido": "super123",
+            "usuarios": []
+        }
+    },
+    "notas": [
+        "Los usuarios se registran mediante el formulario de registro en /registro/",
+        "Los roles especiales (no Usuario Normal) requieren código de verificación",
+        "El superusuario tiene acceso a todas las funciones del sistema"
+    ]
+}
