@@ -9,13 +9,21 @@ class RegistroUsuarioForm(UserCreationForm):
     last_name = forms.CharField(max_length=50, required=True)
     email = forms.EmailField(required=True)
 
-    #camoos que se llaama del model perfil
+    #campos que se llaman del model perfil
     cedula = forms.CharField(max_length=13, required=True)
     telefono = forms.CharField(max_length=10, required=True)
 
-    #para elefgir la opcion de staff
-    staff = forms.BooleanField(required=False)
-    clave_admin = forms.CharField(max_length=25, required=False)
+    #campo para seleccionar rol
+    rol = forms.ChoiceField(choices=[
+        ('usuario', 'Usuario Normal'),
+        ('bodeguero', 'Bodeguero'),
+        ('bibliotecario', 'Bibliotecario'),
+        ('admin', 'Administrador'),
+        ('superusuario', 'Superusuario'),
+    ], required=True, initial='usuario')
+    
+    #código de verificación para roles especiales
+    codigo_rol = forms.CharField(max_length=25, required=False, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User

@@ -67,7 +67,7 @@ class Prestamo(models.Model):
     #calcular multa por retraso
     @property
     def multa_retraso(self):
-        tarifa = 0.50
+        tarifa = 2.00
         return self.dias_retraso * tarifa 
     #retorna la multa por retraso, multiplicando los dias de retraso por la tarifa
 
@@ -77,7 +77,7 @@ class Multa(models.Model):
                                                     ('p', 'perdida'),
                                                     ('d','deterioro')))
     #con choices definimos las opciones que puede tener el campo tipo
-    monto = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    monto = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     #DecimalField se 
     pagada = models.BooleanField(default=False) #para ver si esta pagado o no pagado
     fecha = models.DateField(default=timezone.now) #fecha a la que se crea la multa ,por defecto la fecha actual
@@ -94,10 +94,21 @@ class Multa(models.Model):
         #cuano yo voy al registro el monento de crear el ususario debee poder asiganarle el poder gestionar prestamos automaticamnte 
 
 class Perfil(models.Model):
+    ROLES = (
+        ('usuario', 'Usuario Normal'),
+        ('bodeguero', 'Bodeguero'),
+        ('bibliotecario', 'Bibliotecario'),
+        ('admin', 'Administrador'),
+        ('superusuario', 'Superusuario'),
+    )
+    
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
     cedula = models.CharField(max_length=13)
     telefono = models.CharField(max_length=10)
+    rol = models.CharField(max_length=20, choices=ROLES, default='usuario')
     
+    def __str__(self):
+        return f"{self.usuario.username} - {self.get_rol_display()}"
     
     
 # usar imagenes estaticas de libros 

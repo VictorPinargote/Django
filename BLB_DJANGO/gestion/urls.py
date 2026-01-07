@@ -29,10 +29,13 @@ urlpatterns = [
     path('prestamos/', lista_prestamos, name="lista_prestamos"),
     path('prestamos/nuevo/', crear_prestamo, name="crear_prestamo"),
     path('prestamos/<int:id>', detalle_prestamo, name="detalle_prestamo"),
+    path('prestamos/<int:prestamo_id>/devolver/', devolver_libro, name='devolver_libro'),
     
     #Multas
     path('multas/', lista_multas, name="lista_multas"),
     path('multas/nuevo/<int:prestamo_id>', crear_multa, name="crear_multa"),
+    path('multas/<int:multa_id>/pagar/', pagar_multa, name='pagar_multa'),
+    path('prestamos/<int:prestamo_id>/renovar/', renovar_prestamo, name='renovar_prestamo'),
     
     # API OpenLibrary
     path('api/libros/', api_buscar_libros, name='api_buscar_libros'),

@@ -5,10 +5,52 @@ from django.utils import timezone
 from django.conf import settings
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib.auth import login
+from functools import wraps
 from .openlibrary import buscar_libros, buscar_autores
 
 from .models import Autor, Libro, Prestamo, Multa, Perfil
 from .forms import RegistroUsuarioForm
+
+# ============================================
+# SISTEMA DE PERMISOS POR ROLES
+# ============================================
+# Roles: usuario, bodeguero, bibliotecario, admin, superusuario
+# - usuario: Ver todo, pagar SUS multas, solicitar préstamos
+# - bodeguero: Crear/editar libros y autores  
+# - bibliotecario: Gestionar préstamos
+# - admin: Ver reportes, gestionar multas
+# - superusuario: Acceso total
+
+def obtener_rol(user):
+    """Obtiene el rol del usuario, retorna 'usuario' si no tiene perfil"""
+    if not user.is_authenticated:
+        return None
+    try:
+        return user.perfil.rol
+    except:
+        return 'usuario'
+
+def tiene_permiso(user, roles_permitidos):
+    """Verifica si el usuario tiene alguno de los roles permitidos"""
+    rol = obtener_rol(user)
+    if rol is None:
+        return False
+    if rol == 'superusuario':  # Superusuario tiene acceso total
+        return True
+    return rol in roles_permitidos
+
+def requiere_rol(*roles_permitidos):
+    """Decorador para proteger vistas por rol"""
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+            if not tiene_permiso(request.user, roles_permitidos):
+                return HttpResponseForbidden("No tienes permiso para acceder a esta página.")
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
 
 def index(request):
     titulo2 = "Hola Mundillo y sapos"
@@ -19,9 +61,8 @@ def lista_libros(request):
     libros = Libro.objects.all()
     return render(request, 'gestion/templates/libros.html', {'libros': libros})
 
+@requiere_rol('bodeguero', 'admin')
 def crear_libro(request):
-    if not request.user.is_staff:
-        return HttpResponseForbidden()
     autores = Autor.objects.all()
     if request.method == "POST": #si ya envia datos y captura en variabes para poder crear el libro
         titulo =  request.POST.get('titulo')
@@ -41,10 +82,8 @@ def lista_autores(request):
     autores = Autor.objects.all()
     return render(request, 'gestion/templates/autores.html', {'autores': autores})
         
-@login_required
+@requiere_rol('bodeguero', 'admin')
 def crear_autor(request, id=None):
-    if not request.user.is_staff:
-        return HttpResponseForbidden()
     if id == None:
         autor = None
         modo = 'crear'
@@ -71,12 +110,10 @@ def crear_autor(request, id=None):
 
 def lista_multas(request):
     multas = Multa.objects.all()
-    return render(request, 'multas.html', {'multas': multas})
+    return render(request, 'gestion/templates/multas.html', {'multas': multas})
 
-@login_required #asegura que el usuario este logueado
+@requiere_rol('bibliotecario', 'admin')
 def crear_prestamo(request):
-    if not request.user.is_staff:
-        return HttpResponseForbidden()
     libro = Libro.objects.filter(disponible=True)
     usuario = User.objects.all()
     if request.method == 'POST':
@@ -99,9 +136,8 @@ def crear_prestamo(request):
                                                                      'usuarios': usuario,
                                                                      'fecha': fecha})
 
+@requiere_rol('bodeguero', 'admin')
 def editar_autor(request, id):
-    if not request.user.is_staff:
-        return HttpResponseForbidden()
     autor = get_object_or_404(Autor, id=id)
     if request.method == 'POST':
         nombre = request.POST.get('nombre')
@@ -117,20 +153,45 @@ def editar_autor(request, id):
     
     return render(request, 'gestion/templates/editar_autor.html', {'autor': autor})
 
+# Códigos de verificación para roles especiales
+CODIGOS_ROL = {
+    'usuario': None,  # No requiere código
+    'bodeguero': 'bodega123',
+    'bibliotecario': 'biblio123',
+    'admin': 'admin123',
+    'superusuario': 'super123',
+}
+
 def registro(request):
     if request.method == 'POST':
         form = RegistroUsuarioForm(request.POST)
         if form.is_valid():
-            usuario = form.save() #guarda el usuario en la base de datos
-            cedula = form.cleaned_data.get('cedula') #obtiene el valor llamado
+            rol_seleccionado = form.cleaned_data.get('rol')
+            codigo_ingresado = form.cleaned_data.get('codigo_rol')
+            codigo_requerido = CODIGOS_ROL.get(rol_seleccionado)
+            
+            # Validar código si el rol lo requiere
+            if codigo_requerido is not None and codigo_ingresado != codigo_requerido:
+                form.add_error('codigo_rol', f'Código incorrecto para el rol {rol_seleccionado}')
+                return render(request, 'gestion/templates/registration/registro.html', {'form': form})
+            
+            usuario = form.save()  # guarda el usuario en la base de datos
+            cedula = form.cleaned_data.get('cedula')
             telefono = form.cleaned_data.get('telefono')
-            staff = form.cleaned_data.get('staff')
-            clave = form.cleaned_data.get('clave_admin')
-            perfil = Perfil.objects.create(usuario=usuario, cedula=cedula, telefono=telefono) #en la tabla perfil se crea columnas para el usuario, cedula y telefono
-            clave_staff = "123456"
-            if staff and clave == clave_staff:
+            
+            # Crear perfil con el rol seleccionado
+            perfil = Perfil.objects.create(
+                usuario=usuario,
+                cedula=cedula,
+                telefono=telefono,
+                rol=rol_seleccionado
+            )
+            
+            # Asignar is_staff a roles con privilegios
+            if rol_seleccionado in ['bodeguero', 'bibliotecario', 'admin', 'superusuario']:
                 usuario.is_staff = True
-                usuario.save() #guarda ese cambio en la base de datos
+                usuario.save()
+            
             login(request, usuario)
             return redirect('index')
     else:
@@ -145,10 +206,8 @@ def detalle_prestamo(request, id):
         'multas': multas
     })
 
-@login_required
+@requiere_rol('bibliotecario', 'admin')
 def crear_multa(request, prestamo_id):
-    if not request.user.is_staff:
-        return HttpResponseForbidden()
     prestamo = get_object_or_404(Prestamo, id=prestamo_id)
     if request.method == 'POST':
         tipo = request.POST.get('tipo')
@@ -161,6 +220,56 @@ def crear_multa(request, prestamo_id):
             )
             return redirect('detalle_prestamo', id=prestamo.id)
     return render(request, 'gestion/templates/crear_multa.html', {'prestamo': prestamo})
+
+@requiere_rol('bibliotecario', 'admin')
+def devolver_libro(request, prestamo_id):
+    prestamo = get_object_or_404(Prestamo, id=prestamo_id)
+
+    if request.method == 'POST':
+        estado_libro = request.POST.get('estado_libro')
+
+        # Marcar fecha de devolución
+        prestamo.fecha_devolucion = timezone.now().date()
+        prestamo.libro.disponible = True
+        prestamo.libro.save()
+        prestamo.save()
+        
+        # Crear multa por retraso si hay días de retraso
+        if prestamo.dias_retraso > 0:
+            Multa.objects.create(
+                prestamo=prestamo,
+                tipo='r',
+                monto=prestamo.multa_retraso
+            )
+        
+        # Crear multa por estado del libro
+        if estado_libro == 'deterioro':
+            Multa.objects.create(prestamo=prestamo, tipo='d', monto=10.00)
+        elif estado_libro == 'perdida':
+            Multa.objects.create(prestamo=prestamo, tipo='p', monto=20.00)
+        
+        return redirect('detalle_prestamo', id=prestamo.id)
+    
+    return redirect('detalle_prestamo', id=prestamo.id)
+
+@requiere_rol('bibliotecario', 'admin')
+def pagar_multa(request, multa_id):
+    multa = get_object_or_404(Multa, id=multa_id)
+    multa.pagada = True
+    multa.save()
+    
+    return redirect('detalle_prestamo', id=multa.prestamo.id)
+
+@requiere_rol('bibliotecario', 'admin')
+def renovar_prestamo(request, prestamo_id):
+    
+    prestamo = get_object_or_404(Prestamo, id=prestamo_id)
+    
+    from datetime import timedelta
+    prestamo.fecha_max = timezone.now().date() + timedelta(days=7)
+    prestamo.save()
+    
+    return redirect('detalle_prestamo', id=prestamo.id)
 
 #API OPENLIBRARY
 def api_buscar_libros(request):
@@ -194,3 +303,5 @@ def api_buscar_autores(request):
     return JsonResponse({'autores': []})
 
 # Create your views here.
+
+# usar el permission_required para proteger las vistas

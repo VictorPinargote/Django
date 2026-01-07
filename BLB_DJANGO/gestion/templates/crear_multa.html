@@ -35,8 +35,8 @@
                         <option value="r" data-monto="{{ prestamo.multa_retraso }}">
                             Retraso (${{ prestamo.multa_retraso }})
                         </option>
-                        <option value="p">Pérdida del Libro</option>
-                        <option value="d">Deterioro del Libro</option>
+                        <option value="p" data-monto="20.00">Pérdida del Libro ($20.00)</option>
+                        <option value="d" data-monto="10.00">Deterioro del Libro ($10.00)</option>
                     </select>
                     <div class="form-text mt-2">
                         <i class="bi bi-lightbulb me-1"></i>Si seleccionas "Retraso", el monto se calcula
@@ -79,9 +79,10 @@
         const tipoSelect = document.getElementById('id_tipo');
         const montoInput = document.getElementById('id_monto');
         const selectedOption = tipoSelect.options[tipoSelect.selectedIndex];
+        const monto = selectedOption.getAttribute('data-monto');
 
-        if (selectedOption.value === 'r') {
-            montoInput.value = selectedOption.getAttribute('data-monto');
+        if (monto) {
+            montoInput.value = monto;
             montoInput.readOnly = true;
             montoInput.style.backgroundColor = '#f3f4f6';
         } else {

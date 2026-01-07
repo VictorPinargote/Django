@@ -54,14 +54,30 @@
                     {{ form.password2 }}
                 </div>
 
-                <!-- Staff -->
-                <div class="mb-3 form-check">
-                    {{ form.staff }}
-                    <label class="form-check-label">¿Registrar como Staff/Admin?</label>
+                <!-- Selector de Rol -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-person-badge me-1"></i>Tipo de Cuenta
+                    </label>
+                    <select name="rol" class="form-select" id="select-rol">
+                        <option value="usuario">👤 Usuario Normal</option>
+                        <option value="bodeguero">📦 Bodeguero</option>
+                        <option value="bibliotecario">📚 Bibliotecario</option>
+                        <option value="admin">⚙️ Administrador</option>
+                        <option value="superusuario">🔐 Superusuario</option>
+                    </select>
+                    <small class="text-muted">Los roles especiales requieren un código de verificación</small>
                 </div>
-                <div class="mb-3" id="div-clave-admin">
-                    <label class="form-label fw-semibold">Clave de Admin</label>
-                    {{ form.clave_admin }}
+                
+                <!-- Código de Rol -->
+                <div class="mb-3" id="div-codigo-rol" style="display: none;">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-key me-1"></i>Código de Verificación
+                    </label>
+                    {{ form.codigo_rol }}
+                    {% if form.codigo_rol.errors %}
+                    <div class="text-danger small mt-1">{{ form.codigo_rol.errors.0 }}</div>
+                    {% endif %}
                 </div>
 
                 <!-- Botón -->
@@ -76,19 +92,23 @@
 </div>
 <script>
     // Obtener elementos
-    const checkboxStaff = document.querySelector('input[name="staff"]');
-    const divClaveAdmin = document.getElementById('div-clave-admin');
+    const selectRol = document.getElementById('select-rol');
+    const divCodigoRol = document.getElementById('div-codigo-rol');
 
-    // Ocultar al inicio
-    divClaveAdmin.style.display = 'none';
-
-    // Mostrar/ocultar cuando cambia el checkbox
-    checkboxStaff.addEventListener('change', function () {
-        if (this.checked) {
-            divClaveAdmin.style.display = 'block';
+    // Función para mostrar/ocultar código según rol
+    function actualizarCamposCodigo() {
+        const rol = selectRol.value;
+        if (rol === 'usuario') {
+            divCodigoRol.style.display = 'none';
         } else {
-            divClaveAdmin.style.display = 'none';
+            divCodigoRol.style.display = 'block';
         }
-    });
+    }
+
+    // Ejecutar al cargar la página
+    actualizarCamposCodigo();
+
+    // Mostrar/ocultar cuando cambia el selector
+    selectRol.addEventListener('change', actualizarCamposCodigo);
 </script>
 {% endblock %}
