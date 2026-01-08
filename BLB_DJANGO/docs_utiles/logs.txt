@@ -1,0 +1,11 @@
+# =====================================================
+# REGISTRO DE ACTIVIDAD DEL SISTEMA - BIBLIOTECH
+# =====================================================
+# Este archivo almacena un historial de todas las acciones
+# realizadas en el sistema. Cada línea representa una acción.
+#
+# Formato: [FECHA HORA] | Usuario: XXX | Acción: XXX | Descripción | IP: XXX | URL: XXX
+# =====================================================
+
+[08/01/2026 05:15:01] | Usuario: meli | Acción: REGISTRO | Nuevo usuario registrado: meli con rol bibliotecario | IP: 127.0.0.1 | URL: /registro/
+[08/01/2026 05:24:18] | Usuario: meli | Acción: CREAR | Creó préstamo #5 de "Harry Potter and the Order of the Phoenix" para joelpinargote | IP: 127.0.0.1 | URL: /prestamos/nuevo/

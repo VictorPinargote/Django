@@ -30,6 +30,7 @@ def permisos_usuario(request):
                 permisos['puede_ver_prestamos'] = True
                 permisos['puede_ver_multas'] = True
                 permisos['puede_ver_solicitudes'] = True
+                permisos['puede_ver_autores'] = True
             
             # === BODEGUERO ===
             elif rol == 'bodeguero':

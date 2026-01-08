@@ -184,7 +184,11 @@ def registrar_log(usuario, tipo_accion, descripcion, request=None, modelo=None, 
     """
     Función auxiliar para registrar una actividad en el log.
     Uso: registrar_log(request.user, 'crear', 'Creó el libro: El Quijote', request, 'Libro', 1)
+    Guarda en la base de datos Y en el archivo logs.txt
     """
+    import os
+    from datetime import datetime
+    
     ip = None
     url = None
     
@@ -197,6 +201,7 @@ def registrar_log(usuario, tipo_accion, descripcion, request=None, modelo=None, 
             ip = request.META.get('REMOTE_ADDR')
         url = request.path
     
+    # Guardar en base de datos
     RegistroActividad.objects.create(
         usuario=usuario if usuario and usuario.is_authenticated else None,
         tipo_accion=tipo_accion,
@@ -206,3 +211,21 @@ def registrar_log(usuario, tipo_accion, descripcion, request=None, modelo=None, 
         modelo_afectado=modelo,
         objeto_id=objeto_id
     )
+    
+    # Guardar en archivo de texto
+    try:
+        # Ruta al archivo de logs
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logs_file = os.path.join(base_dir, 'docs_utiles', 'logs.txt')
+        
+        # Formatear la línea de log
+        fecha_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        usuario_str = usuario.username if usuario and hasattr(usuario, 'username') else 'Anónimo'
+        linea_log = f"[{fecha_hora}] | Usuario: {usuario_str} | Acción: {tipo_accion.upper()} | {descripcion} | IP: {ip or '-'} | URL: {url or '-'}\n"
+        
+        # Escribir al archivo (append mode)
+        with open(logs_file, 'a', encoding='utf-8') as f:
+            f.write(linea_log)
+    except Exception as e:
+        # Si falla la escritura al archivo, no interrumpir el flujo
+        pass

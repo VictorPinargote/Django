@@ -14,21 +14,26 @@
             <form method="POST">
                 {% csrf_token %}
 
-                <!-- Info del usuario (solo lectura) -->
-                <div class="alert alert-light mb-4">
-                    <div class="row">
-                        <div class="col-6">
-                            <small class="text-muted">Nombre:</small>
-                            <p class="mb-0 fw-bold">{{ usuario.first_name }} {{ usuario.last_name }}</p>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">Email:</small>
-                            <p class="mb-0 fw-bold">{{ usuario.email|default:"-" }}</p>
-                        </div>
+                <!-- Datos del Usuario (Editables) -->
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Nombre</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ usuario.first_name }}"
+                            required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Apellido</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ usuario.last_name }}"
+                            required>
                     </div>
                 </div>
 
-                <!-- Datos editables -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ usuario.email }}" required>
+                </div>
+
+                <!-- Datos del Perfil -->
                 <div class="row">
                     <div class="col-6 mb-3">
                         <label class="form-label fw-semibold">Cédula</label>
@@ -47,11 +52,9 @@
                     <label class="form-label fw-semibold">
                         <i class="bi bi-person-badge me-1"></i>Rol del Usuario
                     </label>
-                    <select name="rol" class="form-select" required>
+                    <select name="rol" id="rol-select" class="form-select" required>
                         {% for valor, nombre in roles %}
-                        <option value="{{ valor }}" {% if perfil.rol==valor %}selected{% endif %}>
-                            {{ nombre }}
-                        </option>
+                        <option value="{{ valor }}">{{ nombre }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -70,4 +73,14 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var rolActual = "{{ perfil.rol }}";
+        var select = document.getElementById('rol-select');
+        if (select && rolActual) {
+            select.value = rolActual;
+        }
+    });
+</script>
 {% endblock %}

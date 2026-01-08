@@ -232,11 +232,21 @@
         <div class="icon-box mx-auto" style="background: #d8b4fe; color: #9333ea;">
             <i class="bi bi-journal-bookmark"></i>
         </div>
+
+        {% if puede_gestionar_solicitudes %}
+        <h5 class="fw-bold">Gestión Solicitudes</h5>
+        <p class="text-muted small">Administrar peticiones de préstamos.</p>
+        <!-- Aquí idealmente mostraríamos el total de pendientes, pero usaremos un icono o texto genérico si no tenemos la variable -->
+        <h3 class="fw-bold mb-3" style="color: #9333ea;"><i class="bi bi-inbox"></i></h3>
+        <a href="{% url 'lista_solicitudes' %}" class="btn w-100 rounded-pill"
+            style="background: #9333ea; color: white;">Gestionar</a>
+        {% else %}
         <h5 class="fw-bold">Solicitudes</h5>
         <p class="text-muted small">Solicitar préstamos de libros.</p>
         <h3 class="fw-bold mb-3" style="color: #9333ea;">{{ mis_solicitudes|default:"0" }}</h3>
         <a href="{% url 'mis_solicitudes' %}" class="btn w-100 rounded-pill"
             style="background: #9333ea; color: white;">Mis Solicitudes</a>
+        {% endif %}
     </div>
 </div>
 {% endif %}

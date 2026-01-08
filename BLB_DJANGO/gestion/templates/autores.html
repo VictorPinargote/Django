@@ -49,7 +49,11 @@
                                         {{ autor.nombre.0 }}{{ autor.apellido.0 }}
                                     </div>
                                     <div>
-                                        <h6 class="mb-0 fw-bold text-dark">{{ autor.nombre }} {{ autor.apellido }}</h6>
+                                        <a href="{% url 'detalle_autor' autor.id %}"
+                                            class="text-decoration-none hover-underline">
+                                            <h6 class="mb-0 fw-bold text-dark">{{ autor.nombre }} {{ autor.apellido }}
+                                            </h6>
+                                        </a>
                                         <small class="text-muted">ID: #{{ autor.id }}</small>
                                     </div>
                                 </div>

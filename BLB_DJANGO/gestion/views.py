@@ -90,7 +90,7 @@ def detalle_libro(request, id):
     puede_editar = False
     if request.user.is_authenticated:
         rol = obtener_rol(request.user)
-        puede_editar = rol in ['bodeguero', 'admin', 'superusuario']
+        puede_editar = rol in ['bodeguero', 'superusuario']
     return render(request, 'gestion/templates/detalle_libro.html', {
         'libro': libro,
         'puede_editar': puede_editar
@@ -263,7 +263,8 @@ def lista_multas(request):
 @requiere_rol('bibliotecario', 'admin')
 def crear_prestamo(request):
     libro = Libro.objects.filter(disponible=True)
-    usuario = User.objects.all()
+    # Solo mostrar usuarios normales (no personal del sistema)
+    usuario = User.objects.filter(perfil__rol='usuario')
     if request.method == 'POST':
         libro_id = request.POST.get('libro')
         usuario_id = request.POST.get('usuario')
@@ -272,13 +273,30 @@ def crear_prestamo(request):
         if libro_id and usuario_id and fecha_prestamo and fecha_max:
             libro = get_object_or_404(Libro, id=libro_id)
             usuario = get_object_or_404(User, id=usuario_id)
-            prestamo = Prestamo.objects.create(libro = libro,
-                                               usuario=usuario,
-                                               fecha_prestamos=fecha_prestamo,
-                                               fecha_max=fecha_max)
-            libro.disponible = False
-            libro.save()
-            return redirect('detalle_prestamo', id=prestamo.id)
+            
+            # Verificar stock
+            if libro.stock > 0:
+                prestamo = Prestamo.objects.create(libro = libro,
+                                                   usuario=usuario,
+                                                   fecha_prestamos=fecha_prestamo,
+                                                   fecha_max=fecha_max)
+                
+                # Actualizar stock y disponibilidad
+                libro.stock -= 1
+                libro.disponible = libro.stock > 0
+                libro.save()
+                
+                # Registrar en log
+                registrar_log(request.user, 'crear', f'Creó préstamo #{prestamo.id} de "{libro.titulo}" para {usuario.username}', request, 'Prestamo', prestamo.id)
+                
+                return redirect('detalle_prestamo', id=prestamo.id)
+            else:
+                 # Manejo visual en caso de error (aunque el filtro inicial ayuda)
+                 return render(request, 'gestion/templates/crear_prestamo.html', {
+                    'libros': Libro.objects.filter(disponible=True), # Recargar
+                    'usuarios': User.objects.filter(perfil__rol='usuario'),
+                    'error': 'El libro seleccionado no tiene stock disponible.'
+                 })
     fecha = (timezone.now().date()).isoformat() # YYYY-MM-DD este se captura l aparte de al fehc actual
     return render(request, 'gestion/templates/crear_prestamo.html', {'libros': libro,
                                                                      'usuarios': usuario,
@@ -318,6 +336,23 @@ def eliminar_autor(request, id):
             })
     
     return redirect('lista_autores')
+
+def detalle_autor(request, id):
+    """Vista pública para ver detalles de un autor"""
+    autor = get_object_or_404(Autor, id=id)
+    libros = Libro.objects.filter(autor=autor)
+    
+    # Check permissions logic (Bodeguero manages)
+    puede_gestionar = False
+    if request.user.is_authenticated:
+        rol = obtener_rol(request.user)
+        puede_gestionar = rol in ['bodeguero', 'superusuario']
+        
+    return render(request, 'gestion/templates/detalle_autor.html', {
+        'autor': autor,
+        'libros': libros,
+        'puede_gestionar': puede_gestionar
+    })
 
 # Códigos de verificación para roles especiales
 CODIGOS_ROL = {
@@ -398,9 +433,14 @@ def devolver_libro(request, prestamo_id):
         estado_libro = request.POST.get('estado_libro')
 
         # Marcar fecha de devolución
+        # Marcar fecha de devolución
         prestamo.fecha_devolucion = timezone.now().date()
+        
+        # Restaurar Stock
+        prestamo.libro.stock += 1
         prestamo.libro.disponible = True
         prestamo.libro.save()
+        
         prestamo.save()
         
         # Crear multa por retraso si hay días de retraso
@@ -416,6 +456,9 @@ def devolver_libro(request, prestamo_id):
             Multa.objects.create(prestamo=prestamo, tipo='d', monto=10.00)
         elif estado_libro == 'perdida':
             Multa.objects.create(prestamo=prestamo, tipo='p', monto=20.00)
+        
+        # Registrar en log
+        registrar_log(request.user, 'editar', f'Devolvió libro "{prestamo.libro.titulo}" del préstamo #{prestamo.id}. Estado: {estado_libro}', request, 'Prestamo', prestamo.id)
         
         return redirect('detalle_prestamo', id=prestamo.id)
     
@@ -551,11 +594,15 @@ def crear_solicitud(request):
                 })
             
             # Crear la solicitud
-            SolicitudPrestamo.objects.create(
+            solicitud = SolicitudPrestamo.objects.create(
                 usuario=request.user,
                 libro=libro,
                 dias_solicitados=int(dias)
             )
+            
+            # Registrar en log
+            registrar_log(request.user, 'crear', f'Solicitó préstamo del libro "{libro.titulo}" por {dias} días', request, 'SolicitudPrestamo', solicitud.id)
+            
             return redirect('mis_solicitudes')
     
     return render(request, 'gestion/templates/crear_solicitud.html', {
@@ -591,9 +638,10 @@ def aprobar_solicitud(request, solicitud_id):
     
     if request.method == 'POST':
         # Verificar que el libro sigue disponible
-        if not solicitud.libro.disponible:
+        # Verificar que hay STOCK disponible
+        if solicitud.libro.stock <= 0:
             solicitud.estado = 'rechazada'
-            solicitud.motivo_rechazo = 'El libro ya no está disponible'
+            solicitud.motivo_rechazo = 'No hay stock disponible'
             solicitud.fecha_respuesta = timezone.now()
             solicitud.respondido_por = request.user
             solicitud.save()
@@ -613,9 +661,13 @@ def aprobar_solicitud(request, solicitud_id):
             fecha_max=fecha_max
         )
         
-        # Marcar libro como no disponible
-        solicitud.libro.disponible = False
+        # Actualizar stock
+        solicitud.libro.stock -= 1
+        solicitud.libro.disponible = solicitud.libro.stock > 0
         solicitud.libro.save()
+        
+        # Registrar en log
+        registrar_log(request.user, 'aprobar', f'Aprobó solicitud #{solicitud.id} de {solicitud.usuario.username} para "{solicitud.libro.titulo}"', request, 'SolicitudPrestamo', solicitud.id)
         
         return redirect('detalle_prestamo', id=prestamo.id)
     
@@ -637,6 +689,9 @@ def rechazar_solicitud(request, solicitud_id):
         solicitud.fecha_respuesta = timezone.now()
         solicitud.respondido_por = request.user
         solicitud.save()
+        
+        # Registrar en log
+        registrar_log(request.user, 'rechazar', f'Rechazó solicitud #{solicitud.id} de {solicitud.usuario.username} para "{solicitud.libro.titulo}". Motivo: {motivo}', request, 'SolicitudPrestamo', solicitud.id)
     
     return redirect('lista_solicitudes')
 
@@ -694,6 +749,12 @@ def editar_usuario(request, user_id):
     )
     
     if request.method == 'POST':
+        # Datos del usuario (User model)
+        usuario.first_name = request.POST.get('first_name', usuario.first_name)
+        usuario.last_name = request.POST.get('last_name', usuario.last_name)
+        usuario.email = request.POST.get('email', usuario.email)
+        
+        # Datos del perfil
         nuevo_rol = request.POST.get('rol')
         nueva_cedula = request.POST.get('cedula', perfil.cedula)
         nuevo_telefono = request.POST.get('telefono', perfil.telefono)

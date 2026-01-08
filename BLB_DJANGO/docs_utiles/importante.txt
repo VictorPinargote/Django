@@ -10,7 +10,7 @@ SISTEMA DE ROLES - CÓDIGOS DE VERIFICACIÓN
 
 | ROL           | CÓDIGO        | 
 |---------------|---------------|
-| Usuario       | (no requiere) |
+      | (no requiere) |
 | Bodeguero     | bodega76      |
 | Bibliotecario | biblio76      |
 | Admin         | admin76       |
@@ -18,7 +18,7 @@ SISTEMA DE ROLES - CÓDIGOS DE VERIFICACIÓN
 
 =====================================================
 PERMISOS POR ROL
-=====================================================
+=====================================================| Usuario 
 
 USUARIO NORMAL:
 - Ver: Libros, Préstamos (los suyos), Solicitudes (crear y ver las suyas)
