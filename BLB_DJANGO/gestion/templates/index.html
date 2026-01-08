@@ -5,22 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Biblioteca</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
     <style>
-        /* === ESTILOS BÁSICOS === */
         body {
             font-family: 'Poppins', sans-serif;
             background: #f1f5f9;
             min-height: 100vh;
         }
 
-        /* === NAVBAR === */
         .navbar {
             background: #1e3a8a;
             padding: 1rem 0;
@@ -43,7 +37,6 @@
             color: #60a5fa !important;
         }
 
-        /* === HERO SECTION === */
         .hero-section {
             background: #1e3a8a;
             color: white;
@@ -52,7 +45,6 @@
             margin-bottom: 40px;
         }
 
-        /* === CARDS === */
         .card {
             border: none;
             border-radius: 16px;
@@ -64,7 +56,6 @@
             transition: all 0.3s;
         }
 
-        /* === ICON BOX (para home) === */
         .icon-box {
             width: 60px;
             height: 60px;
@@ -96,7 +87,6 @@
             color: #dc2626;
         }
 
-        /* === BOTONES === */
         .btn-custom {
             background: #1e40af;
             color: white;
@@ -111,19 +101,16 @@
             color: white;
         }
 
-        /* === FOOTER === */
         footer {
             background: #1f2937;
             color: #d1d5db;
             margin-top: 50px;
         }
 
-        /* === TABLAS === */
         .table-hover tbody tr:hover {
             background-color: rgba(30, 58, 138, 0.06);
         }
 
-        /* === BADGES === */
         .badge {
             padding: 0.4rem 0.8rem;
             font-weight: 600;
@@ -144,51 +131,82 @@
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_libros' %}">Libros</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_autores' %}">Autores</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_prestamos' %}">Préstamos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_multas' %}">Multas</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_libros' %}">Libros</a>
+                    </li>
 
-                    {% if user.is_authenticated %}
-                    <!-- Menú de Solicitudes -->
+                    {% if puede_ver_autores %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_autores' %}">Autores</a>
+                    </li>
+                    {% endif %}
+
+                    {% if puede_ver_prestamos %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_prestamos' %}">Préstamos</a>
+                    </li>
+                    {% endif %}
+
+                    {% if puede_ver_multas %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_multas' %}">Multas</a>
+                    </li>
+                    {% endif %}
+
+                    {% if puede_ver_solicitudes %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-journal-bookmark me-1"></i>Solicitudes
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'crear_solicitud' %}">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'crear_solicitud' %}">
                                     <i class="bi bi-plus-circle me-2"></i>Solicitar Préstamo
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'mis_solicitudes' %}">
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'mis_solicitudes' %}">
                                     <i class="bi bi-list-check me-2"></i>Mis Solicitudes
-                                </a></li>
-                            {% if user.is_staff %}
+                                </a>
+                            </li>
+                            {% if puede_gestionar_solicitudes %}
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item" href="{% url 'lista_solicitudes' %}">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'lista_solicitudes' %}">
                                     <i class="bi bi-gear me-2"></i>Gestionar Solicitudes
-                                </a></li>
+                                </a>
+                            </li>
                             {% endif %}
                         </ul>
                     </li>
                     {% endif %}
 
-                    {% if not user.is_authenticated %}
-                    <li class="nav-item ms-2">
-                        <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
+                    {% if puede_ver_usuarios %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_usuarios' %}">
+                            <i class="bi bi-people me-1"></i>Usuarios
+                        </a>
                     </li>
-                    <li class="nav-item ms-2">
-                        <a class="nav-link" href="{% url 'registro' %}">Registro</a>
+                    {% endif %}
+
+                    {% if puede_ver_logs %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_logs' %}">
+                            <i class="bi bi-activity me-1"></i>Logs
+                        </a>
                     </li>
-                    {% else %}
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
                     <li class="nav-item ms-2">
                         <span class="nav-link text-light">
                             Hola, {{ user.first_name|default:user.username }}
-                            {% if user.perfil %}
-                            <span class="badge bg-info ms-1">{{ user.perfil.get_rol_display }}</span>
-                            {% endif %}
+                            <span class="badge bg-info ms-1">{{ rol_display }}</span>
                         </span>
                     </li>
                     <li class="nav-item ms-2">
@@ -196,6 +214,13 @@
                             {% csrf_token %}
                             <button type="submit" class="btn btn-custom btn-sm">Cerrar Sesión</button>
                         </form>
+                    </li>
+                    {% else %}
+                    <li class="nav-item ms-2">
+                        <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="nav-link" href="{% url 'registro' %}">Registro</a>
                     </li>
                     {% endif %}
                 </ul>

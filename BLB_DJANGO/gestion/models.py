@@ -23,13 +23,14 @@ class Autor(models.Model):
         return f"{self.nombre} {self.apellido}" #devolvemos el nombre y apellido del autor como nombre del objeto
     
 class Libro(models.Model):
-    titulo = models.CharField(max_length=100)
-    #el (models.foreingkey) es para definir una llave foranea, en este caso un libro tiene un autor
-    autor = models.ForeignKey(Autor,related_name="libros", on_delete=models.PROTECT)
-    #related name es para definir el nombre con el que se va a acceder a los libros desde el autor
-    #(on_delete)=models.PROTECT es para definir que pasa si se elimina el autor, en este caso no se puede eliminar si tiene libros asociados
-    disponible = models.BooleanField(default=True) #un boolean y por defecto ponerle activado
-    imagen = models.ImageField(upload_to='libros/', blank=True, null=True)  # Imagen del libro
+    titulo = models.CharField(max_length=200)
+    autor = models.ForeignKey(Autor, related_name="libros", on_delete=models.PROTECT)
+    descripcion = models.TextField(blank=True, null=True)  # Descripción/Sinopsis del libro
+    disponible = models.BooleanField(default=True)
+    imagen = models.ImageField(upload_to='libros/', blank=True, null=True)
+    stock = models.IntegerField(default=1)
+    anio_publicacion = models.IntegerField(blank=True, null=True)  # Año de publicación
+    es_de_openlibrary = models.BooleanField(default=False)  # Si viene de OpenLibrary
     
     def __str__(self):
         return f"{self.titulo} - {self.autor.nombre} {self.autor.apellido}" #devolvemos el titulo del libro y el nombre del autor como nombre del objeto
@@ -138,3 +139,70 @@ class Perfil(models.Model):
     
     def __str__(self):
         return f"{self.usuario.username} - {self.get_rol_display()}"
+
+
+# =====================================================
+# SISTEMA DE LOGS / REGISTRO DE ACTIVIDAD
+# =====================================================
+class RegistroActividad(models.Model):
+    TIPOS_ACCION = (
+        ('login', 'Inicio de Sesión'),
+        ('logout', 'Cierre de Sesión'),
+        ('registro', 'Registro de Usuario'),
+        ('crear', 'Crear'),
+        ('editar', 'Editar'),
+        ('eliminar', 'Eliminar'),
+        ('ver', 'Ver/Consultar'),
+        ('solicitud', 'Solicitud de Préstamo'),
+        ('aprobar', 'Aprobar'),
+        ('rechazar', 'Rechazar'),
+        ('devolucion', 'Devolución'),
+        ('pago', 'Pago de Multa'),
+        ('otro', 'Otra Acción'),
+    )
+    
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    fecha_hora = models.DateTimeField(default=timezone.now)
+    tipo_accion = models.CharField(max_length=20, choices=TIPOS_ACCION)
+    descripcion = models.TextField()
+    direccion_ip = models.GenericIPAddressField(null=True, blank=True)
+    url = models.CharField(max_length=500, blank=True, null=True)
+    modelo_afectado = models.CharField(max_length=100, blank=True, null=True)
+    objeto_id = models.IntegerField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-fecha_hora']
+        verbose_name = 'Registro de Actividad'
+        verbose_name_plural = 'Registros de Actividad'
+    
+    def __str__(self):
+        usuario_str = self.usuario.username if self.usuario else 'Anónimo'
+        return f"{self.fecha_hora.strftime('%d/%m/%Y %H:%M')} - {usuario_str} - {self.get_tipo_accion_display()}"
+
+
+def registrar_log(usuario, tipo_accion, descripcion, request=None, modelo=None, objeto_id=None):
+    """
+    Función auxiliar para registrar una actividad en el log.
+    Uso: registrar_log(request.user, 'crear', 'Creó el libro: El Quijote', request, 'Libro', 1)
+    """
+    ip = None
+    url = None
+    
+    if request:
+        # Obtener IP del cliente
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        url = request.path
+    
+    RegistroActividad.objects.create(
+        usuario=usuario if usuario and usuario.is_authenticated else None,
+        tipo_accion=tipo_accion,
+        descripcion=descripcion,
+        direccion_ip=ip,
+        url=url,
+        modelo_afectado=modelo,
+        objeto_id=objeto_id
+    )

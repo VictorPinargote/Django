@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db import models
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -8,7 +9,7 @@ from django.contrib.auth import login
 from functools import wraps
 from .openlibrary import buscar_libros, buscar_autores
 
-from .models import Autor, Libro, Prestamo, Multa, Perfil, SolicitudPrestamo
+from .models import Autor, Libro, Prestamo, Multa, Perfil, SolicitudPrestamo, RegistroActividad, registrar_log
 from .forms import RegistroUsuarioForm
 from datetime import timedelta
 
@@ -54,29 +55,170 @@ def requiere_rol(*roles_permitidos):
     return decorator
 
 def index(request):
-    titulo2 = "Hola Mundillo y sapos"
-    title = settings.TITLE
-    return render(request, 'gestion/templates/home.html', {'titulo': title, 't': titulo2})
+    # Calcular totales para el dashboard
+    total_libros = Libro.objects.count()
+    total_autores = Autor.objects.count()
+    total_prestamos = Prestamo.objects.filter(fecha_devolucion__isnull=True).count()
+    total_multas = Multa.objects.filter(pagada=False).aggregate(total=models.Sum('monto'))['total'] or 0
+    total_stock = Libro.objects.aggregate(total=models.Sum('stock'))['total'] or 0
+    mis_solicitudes = 0
+    
+    # Libros destacados para visitantes (los últimos 8)
+    libros_destacados = Libro.objects.all().order_by('-id')[:8]
+    
+    if request.user.is_authenticated:
+        mis_solicitudes = SolicitudPrestamo.objects.filter(usuario=request.user).count()
+    
+    return render(request, 'gestion/templates/home.html', {
+        'total_libros': total_libros,
+        'total_autores': total_autores,
+        'total_prestamos': total_prestamos,
+        'total_multas': total_multas,
+        'total_stock': total_stock,
+        'mis_solicitudes': mis_solicitudes,
+        'libros_destacados': libros_destacados,
+    })
 
 def lista_libros(request):
     libros = Libro.objects.all()
     return render(request, 'gestion/templates/libros.html', {'libros': libros})
 
+def detalle_libro(request, id):
+    """Vista para ver detalle de un libro - todos pueden ver"""
+    libro = get_object_or_404(Libro, id=id)
+    # Verificar si el usuario puede editar (bodeguero o admin)
+    puede_editar = False
+    if request.user.is_authenticated:
+        rol = obtener_rol(request.user)
+        puede_editar = rol in ['bodeguero', 'admin', 'superusuario']
+    return render(request, 'gestion/templates/detalle_libro.html', {
+        'libro': libro,
+        'puede_editar': puede_editar
+    })
+
+@requiere_rol('bodeguero', 'admin')
+def editar_libro(request, id):
+    """Vista para editar un libro - solo bodeguero y admin"""
+    libro = get_object_or_404(Libro, id=id)
+    autores = Autor.objects.all()
+    
+    if request.method == 'POST':
+        libro.titulo = request.POST.get('titulo', libro.titulo)
+        autor_id = request.POST.get('autor')
+        if autor_id:
+            libro.autor = get_object_or_404(Autor, id=autor_id)
+        libro.descripcion = request.POST.get('descripcion', libro.descripcion)
+        libro.stock = int(request.POST.get('stock', libro.stock))
+        libro.disponible = request.POST.get('disponible') == 'on'
+        
+        if request.POST.get('anio_publicacion'):
+            libro.anio_publicacion = int(request.POST.get('anio_publicacion'))
+        
+        imagen = request.FILES.get('imagen')
+        if imagen:
+            libro.imagen = imagen
+        
+        libro.save()
+        registrar_log(request.user, 'editar', f'Editó libro: {libro.titulo}', request, 'Libro', libro.id)
+        return redirect('detalle_libro', id=libro.id)
+    
+    return render(request, 'gestion/templates/editar_libro.html', {
+        'libro': libro,
+        'autores': autores
+    })
+
+@requiere_rol('bodeguero', 'admin')
+def eliminar_libro(request, id):
+    """Vista para eliminar un libro - solo bodeguero y admin"""
+    libro = get_object_or_404(Libro, id=id)
+    
+    if request.method == 'POST':
+        titulo = libro.titulo
+        try:
+            libro.delete()
+            registrar_log(request.user, 'eliminar', f'Eliminó libro: {titulo}', request, 'Libro', id)
+            return redirect('lista_libros')
+        except:
+            return render(request, 'gestion/templates/detalle_libro.html', {
+                'libro': libro,
+                'error': 'No se puede eliminar el libro porque tiene préstamos asociados.'
+            })
+    
+    return redirect('detalle_libro', id=libro.id)
+
 @requiere_rol('bodeguero', 'admin')
 def crear_libro(request):
     autores = Autor.objects.all()
-    if request.method == "POST": #si ya envia datos y captura en variabes para poder crear el libro
-        titulo =  request.POST.get('titulo')
-        autor_id =  request.POST.get('autor')
+    if request.method == "POST":
+        titulo = request.POST.get('titulo')
+        autor_id = request.POST.get('autor')
+        autor_nombre = request.POST.get('autor_nombre', '')  # Nombre del autor de OpenLibrary
+        stock = request.POST.get('stock', 1)
+        disponible = request.POST.get('disponible') == 'on'
+        imagen = request.FILES.get('imagen')
+        imagen_url = request.POST.get('imagen_url', '')
+        descripcion = request.POST.get('descripcion', '')
+        anio_publicacion = request.POST.get('anio_publicacion')
+        es_de_openlibrary = request.POST.get('es_de_openlibrary') == 'true'
         
-        if titulo and autor_id:
+        # Determinar el autor
+        autor = None
+        if autor_id:  # Si eligió del select
             autor = get_object_or_404(Autor, id=autor_id)
-            Libro.objects.create(titulo=titulo, autor=autor)
+        elif autor_nombre:  # Si viene de OpenLibrary (auto-crear autor)
+            # Separar nombre y apellido
+            partes = autor_nombre.split(',')[0].strip().split()  # Tomar primer autor si hay varios
+            if len(partes) >= 2:
+                nombre = ' '.join(partes[:-1])
+                apellido = partes[-1]
+            else:
+                nombre = autor_nombre
+                apellido = ''
+            # Buscar o crear el autor
+            autor, created = Autor.objects.get_or_create(
+                nombre__iexact=nombre,
+                apellido__iexact=apellido,
+                defaults={'nombre': nombre, 'apellido': apellido}
+            )
+        
+        if titulo and autor:
+            libro = Libro.objects.create(
+                titulo=titulo, 
+                autor=autor, 
+                stock=int(stock) if stock else 1,
+                disponible=disponible,
+                descripcion=descripcion,
+                anio_publicacion=int(anio_publicacion) if anio_publicacion else None,
+                es_de_openlibrary=es_de_openlibrary
+            )
+            
+            # Si hay imagen subida manualmente, usarla
+            if imagen:
+                libro.imagen = imagen
+                libro.save()
+            # Si hay URL de OpenLibrary, descargar la imagen
+            elif imagen_url:
+                try:
+                    import requests
+                    from django.core.files.base import ContentFile
+                    response = requests.get(imagen_url, timeout=10)
+                    if response.status_code == 200:
+                        nombre_archivo = f"libro_{libro.id}.jpg"
+                        libro.imagen.save(nombre_archivo, ContentFile(response.content), save=True)
+                except Exception as e:
+                    print(f"Error descargando imagen: {e}")
+            
+            registrar_log(request.user, 'crear', f'Creó libro: {titulo}', request, 'Libro', libro.id)
             return redirect('lista_libros')
     return render(request, 'gestion/templates/crear_libros.html', {'autores': autores})
 
 def lista_prestamos(request):
-    prestamos = Prestamo.objects.all()
+    rol = obtener_rol(request.user)
+    # Usuarios normales solo ven sus préstamos
+    if request.user.is_authenticated and rol == 'usuario':
+        prestamos = Prestamo.objects.filter(usuario=request.user)
+    else:
+        prestamos = Prestamo.objects.all()
     return render(request, 'gestion/templates/prestamos.html', {'prestamos': prestamos})
 
 def lista_autores(request):
@@ -110,7 +252,12 @@ def crear_autor(request, id=None):
     return render(request, 'gestion/templates/crear_autores.html', context)
 
 def lista_multas(request):
-    multas = Multa.objects.all()
+    rol = obtener_rol(request.user)
+    # Usuarios normales solo ven sus multas
+    if request.user.is_authenticated and rol == 'usuario':
+        multas = Multa.objects.filter(prestamo__usuario=request.user)
+    else:
+        multas = Multa.objects.all()
     return render(request, 'gestion/templates/multas.html', {'multas': multas})
 
 @requiere_rol('bibliotecario', 'admin')
@@ -157,10 +304,10 @@ def editar_autor(request, id):
 # Códigos de verificación para roles especiales
 CODIGOS_ROL = {
     'usuario': None,  # No requiere código
-    'bodeguero': 'bodega123',
-    'bibliotecario': 'biblio123',
-    'admin': 'admin123',
-    'superusuario': 'super123',
+    'bodeguero': 'bodega76',
+    'bibliotecario': 'biblio76',
+    'admin': 'admin76',
+    'superusuario': 'superuser76',
 }
 
 def registro(request):
@@ -192,6 +339,9 @@ def registro(request):
             if rol_seleccionado in ['bodeguero', 'bibliotecario', 'admin', 'superusuario']:
                 usuario.is_staff = True
                 usuario.save()
+            
+            # Registrar en logs
+            registrar_log(usuario, 'registro', f'Nuevo usuario registrado: {usuario.username} con rol {rol_seleccionado}', request, 'User', usuario.id)
             
             login(request, usuario)
             return redirect('index')
@@ -281,11 +431,30 @@ def api_buscar_libros(request):
         # reiniciar los resultados
         libros = []
         for libro in resultados:
+            # Obtener descripción del Works endpoint (si tiene key)
+            descripcion = ''
+            work_key = libro.get('key', '')
+            if work_key:
+                try:
+                    import requests as req
+                    work_response = req.get(f'https://openlibrary.org{work_key}.json', timeout=5)
+                    if work_response.status_code == 200:
+                        work_data = work_response.json()
+                        desc = work_data.get('description', '')
+                        if isinstance(desc, dict):
+                            descripcion = desc.get('value', '')
+                        elif isinstance(desc, str):
+                            descripcion = desc
+                except:
+                    pass
+            
             libros.append({
                 'titulo': libro.get('title', 'Sin título'),
                 'autor': ', '.join(libro.get('author_name', ['Desconocido'])),
                 'año': libro.get('first_publish_year', 'N/A'),
-                'portada': f"https://covers.openlibrary.org/b/id/{libro.get('cover_i', '')}-M.jpg" if libro.get('cover_i') else None
+                'portada': f"https://covers.openlibrary.org/b/id/{libro.get('cover_i', '')}-M.jpg" if libro.get('cover_i') else None,
+                'descripcion': descripcion[:500] if descripcion else '',
+                'id_openlibrary': work_key
             })
         return JsonResponse({'libros': libros})
     return JsonResponse({'libros': []})
@@ -429,3 +598,160 @@ def rechazar_solicitud(request, solicitud_id):
         solicitud.save()
     
     return redirect('lista_solicitudes')
+
+# =====================================================
+# GESTIÓN DE USUARIOS (Solo Admin y Superusuario)
+# =====================================================
+
+@requiere_rol('admin')
+def lista_usuarios(request):
+    """Vista para ver todos los usuarios del sistema"""
+    usuarios = User.objects.all().select_related('perfil').order_by('-date_joined')
+    return render(request, 'gestion/templates/lista_usuarios.html', {
+        'usuarios': usuarios
+    })
+
+@requiere_rol('admin')
+def crear_usuario(request):
+    """Vista para crear un nuevo usuario (admin puede crear cualquier rol)"""
+    if request.method == 'POST':
+        form = RegistroUsuarioForm(request.POST)
+        if form.is_valid():
+            usuario = form.save()
+            cedula = form.cleaned_data.get('cedula')
+            telefono = form.cleaned_data.get('telefono')
+            rol = form.cleaned_data.get('rol')
+            
+            # Admin puede crear cualquier rol sin código
+            perfil = Perfil.objects.create(
+                usuario=usuario,
+                cedula=cedula,
+                telefono=telefono,
+                rol=rol
+            )
+            
+            # Asignar is_staff según el rol
+            if rol in ['bodeguero', 'bibliotecario', 'admin', 'superusuario']:
+                usuario.is_staff = True
+                usuario.save()
+            
+            return redirect('lista_usuarios')
+    else:
+        form = RegistroUsuarioForm()
+    
+    return render(request, 'gestion/templates/crear_usuario.html', {'form': form})
+
+@requiere_rol('admin')
+def editar_usuario(request, user_id):
+    """Vista para editar el rol de un usuario"""
+    usuario = get_object_or_404(User, id=user_id)
+    
+    # Obtener o crear perfil
+    perfil, created = Perfil.objects.get_or_create(
+        usuario=usuario,
+        defaults={'cedula': '0000000000', 'telefono': '0000000000', 'rol': 'usuario'}
+    )
+    
+    if request.method == 'POST':
+        nuevo_rol = request.POST.get('rol')
+        nueva_cedula = request.POST.get('cedula', perfil.cedula)
+        nuevo_telefono = request.POST.get('telefono', perfil.telefono)
+        
+        perfil.rol = nuevo_rol
+        perfil.cedula = nueva_cedula
+        perfil.telefono = nuevo_telefono
+        perfil.save()
+        
+        # Actualizar is_staff según el rol
+        if nuevo_rol in ['bodeguero', 'bibliotecario', 'admin', 'superusuario']:
+            usuario.is_staff = True
+        else:
+            usuario.is_staff = False
+        usuario.save()
+        
+        return redirect('lista_usuarios')
+    
+    roles = Perfil.ROLES
+    return render(request, 'gestion/templates/editar_usuario.html', {
+        'usuario': usuario,
+        'perfil': perfil,
+        'roles': roles
+    })
+
+@requiere_rol('admin')
+def eliminar_usuario(request, user_id):
+    """Vista para eliminar un usuario"""
+    usuario = get_object_or_404(User, id=user_id)
+    
+    # No permitir eliminar al propio usuario
+    if usuario == request.user:
+        return redirect('lista_usuarios')
+    
+    if request.method == 'POST':
+        username = usuario.username
+        usuario.delete()
+        registrar_log(request.user, 'eliminar', f'Eliminó al usuario: {username}', request, 'User')
+    
+    return redirect('lista_usuarios')
+
+
+# =====================================================
+# VISUALIZACIÓN DE LOGS (Solo Admin y Superusuario)
+# =====================================================
+
+@requiere_rol('admin')
+def lista_logs(request):
+    """Vista para ver todos los registros de actividad"""
+    # Filtros
+    tipo = request.GET.get('tipo', '')
+    usuario_filtro = request.GET.get('usuario', '')
+    fecha = request.GET.get('fecha', '')
+    
+    logs = RegistroActividad.objects.all()
+    
+    if tipo:
+        logs = logs.filter(tipo_accion=tipo)
+    if usuario_filtro:
+        logs = logs.filter(usuario__username__icontains=usuario_filtro)
+    if fecha:
+        logs = logs.filter(fecha_hora__date=fecha)
+    
+    # Limitar a los últimos 500 registros
+    logs = logs[:500]
+    
+    tipos_accion = RegistroActividad.TIPOS_ACCION
+    
+    return render(request, 'gestion/templates/lista_logs.html', {
+        'logs': logs,
+        'tipos_accion': tipos_accion,
+        'filtro_tipo': tipo,
+        'filtro_usuario': usuario_filtro,
+        'filtro_fecha': fecha,
+    })
+
+
+# =====================================================
+# GESTIÓN DE STOCK (Bodeguero)
+# =====================================================
+
+@requiere_rol('bodeguero', 'admin')
+def gestionar_stock(request):
+    """Vista para ver y editar el stock de libros"""
+    libros = Libro.objects.all().order_by('titulo')
+    rol = obtener_rol(request.user)
+    puede_editar = rol == 'bodeguero' or rol == 'superusuario'
+    
+    if request.method == 'POST' and puede_editar:
+        libro_id = request.POST.get('libro_id')
+        nuevo_stock = request.POST.get('stock')
+        
+        if libro_id and nuevo_stock:
+            libro = get_object_or_404(Libro, id=libro_id)
+            libro.stock = int(nuevo_stock)
+            libro.save()
+            registrar_log(request.user, 'editar', f'Actualizó stock de "{libro.titulo}" a {nuevo_stock}', request, 'Libro', libro.id)
+    
+    return render(request, 'gestion/templates/gestionar_stock.html', {
+        'libros': libros,
+        'puede_editar': puede_editar,
+    })

@@ -2,65 +2,103 @@
 
 {% block contenido %}
 <div class="col-12">
-    <div class="card shadow-sm">
-        <!-- Header -->
-        <div class="card-header text-white py-3 d-flex justify-content-between align-items-center"
-            style="background: #1e40af; border-radius: 16px 16px 0 0;">
-            <h4 class="mb-0 fw-bold">
-                <i class="bi bi-book-fill me-2"></i>Catálogo de Libros
-            </h4>
-            {% if user.is_staff %}
-            <a href="{% url 'crear_libro' %}" class="btn btn-light rounded-pill px-3 fw-semibold">
-                <i class="bi bi-plus-circle me-1"></i>Nuevo Libro
-            </a>
-            {% endif %}
+    <div class="card shadow border-0" style="border-radius: 24px; overflow: hidden;">
+        <!-- Header con gradiente vibrante -->
+        <div class="card-header text-white py-4"
+            style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0 fw-bold">
+                        <i class="bi bi-collection me-2"></i>Catálogo de Libros
+                    </h3>
+                    <p class="mb-0 mt-1 opacity-75">Explora nuestra colección de libros</p>
+                </div>
+                {% if puede_ver_autores %}
+                <a href="{% url 'crear_libro' %}" class="btn btn-light btn-lg rounded-pill px-4 fw-bold shadow">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Libro
+                </a>
+                {% endif %}
+            </div>
         </div>
 
         <!-- Body -->
-        <div class="card-body p-4">
+        <div class="card-body p-4" style="background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);">
             {% if libros %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th><i class="bi bi-hash me-1"></i>ID</th>
-                            <th><i class="bi bi-book me-1"></i>Título</th>
-                            <th><i class="bi bi-person me-1"></i>Autor</th>
-                            <th class="text-center"><i class="bi bi-check-circle me-1"></i>Disponible</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for libro in libros %}
-                        <tr>
-                            <td class="text-muted">#{{ libro.id }}</td>
-                            <td class="fw-semibold">{{ libro.titulo }}</td>
-                            <td>{{ libro.autor }}</td>
-                            <td class="text-center">
-                                {% if libro.disponible %}
-                                <span class="badge bg-success rounded-pill">
-                                    <i class="bi bi-check-circle me-1"></i>Disponible
-                                </span>
+            <div class="row g-4">
+                {% for libro in libros %}
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                    <a href="{% url 'detalle_libro' libro.id %}" class="text-decoration-none">
+                        <div class="card h-100 border-0 shadow-sm libro-card"
+                            style="border-radius: 16px; overflow: hidden; transition: all 0.3s; cursor: pointer;">
+                            <!-- Imagen -->
+                            <div class="position-relative"
+                                style="height: 200px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                {% if libro.imagen %}
+                                <img src="{{ libro.imagen.url }}" class="w-100 h-100" style="object-fit: cover;"
+                                    alt="{{ libro.titulo }}">
                                 {% else %}
-                                <span class="badge bg-danger rounded-pill">
-                                    <i class="bi bi-x-circle me-1"></i>Prestado
-                                </span>
+                                <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                                    <i class="bi bi-book display-2 text-primary opacity-50"></i>
+                                </div>
                                 {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                <!-- Badge disponibilidad -->
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    {% if libro.disponible %}
+                                    <span class="badge rounded-pill"
+                                        style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 8px 12px;">
+                                        <i class="bi bi-check-circle me-1"></i>Disponible
+                                    </span>
+                                    {% else %}
+                                    <span class="badge rounded-pill"
+                                        style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 8px 12px;">
+                                        <i class="bi bi-x-circle me-1"></i>Prestado
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <!-- Badge stock -->
+                                <div class="position-absolute bottom-0 start-0 m-2">
+                                    <span class="badge rounded-pill bg-dark bg-opacity-75" style="padding: 6px 10px;">
+                                        <i class="bi bi-box-seam me-1"></i>Stock: {{ libro.stock }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Info -->
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-1" style="color: #1e3a8a;">{{ libro.titulo|truncatechars:35 }}
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-person me-1"></i>{{ libro.autor.nombre }} {{ libro.autor.apellido }}
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
             </div>
             {% else %}
             <div class="text-center py-5">
-                <i class="bi bi-inbox display-1 text-muted"></i>
-                <p class="text-muted mt-3 mb-4">No hay libros registrados</p>
-                <a href="{% url 'crear_libro' %}" class="btn btn-primary rounded-pill px-4">
+                <div class="mb-4">
+                    <i class="bi bi-book display-1" style="color: #c7d2fe;"></i>
+                </div>
+                <h4 class="fw-bold text-muted mb-3">No hay libros registrados</h4>
+                <p class="text-muted mb-4">¡Comienza agregando el primer libro a tu biblioteca!</p>
+                {% if puede_ver_autores %}
+                <a href="{% url 'crear_libro' %}" class="btn btn-lg rounded-pill px-5"
+                    style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white;">
                     <i class="bi bi-plus-circle me-2"></i>Crear Primer Libro
                 </a>
+                {% endif %}
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
 {% endblock %}

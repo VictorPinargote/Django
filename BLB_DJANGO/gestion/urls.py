@@ -19,6 +19,9 @@ urlpatterns = [
     #libros
     path('libros/', lista_libros, name="lista_libros"),
     path('libros/nuevo/', crear_libro, name="crear_libro"),
+    path('libros/<int:id>/', detalle_libro, name="detalle_libro"),
+    path('libros/<int:id>/editar/', editar_libro, name="editar_libro"),
+    path('libros/<int:id>/eliminar/', eliminar_libro, name="eliminar_libro"),
     
     #Autores
     path('autores/', lista_autores, name="lista_autores"),
@@ -43,6 +46,18 @@ urlpatterns = [
     path('solicitudes/', lista_solicitudes, name='lista_solicitudes'),
     path('solicitudes/<int:solicitud_id>/aprobar/', aprobar_solicitud, name='aprobar_solicitud'),
     path('solicitudes/<int:solicitud_id>/rechazar/', rechazar_solicitud, name='rechazar_solicitud'),
+    
+    # Gestión de Usuarios (Solo Admin y Superusuario)
+    path('usuarios/', lista_usuarios, name='lista_usuarios'),
+    path('usuarios/nuevo/', crear_usuario, name='crear_usuario'),
+    path('usuarios/<int:user_id>/editar/', editar_usuario, name='editar_usuario'),
+    path('usuarios/<int:user_id>/eliminar/', eliminar_usuario, name='eliminar_usuario'),
+    
+    # Logs de Actividad (Solo Admin y Superusuario)
+    path('logs/', lista_logs, name='lista_logs'),
+    
+    # Gestión de Stock (Bodeguero)
+    path('stock/', gestionar_stock, name='gestionar_stock'),
     
     # API OpenLibrary
     path('api/libros/', api_buscar_libros, name='api_buscar_libros'),
