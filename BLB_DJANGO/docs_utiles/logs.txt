@@ -16,3 +16,5 @@
 [08/01/2026 09:18:40] | Usuario: biblio | Acción: REGISTRO | Nuevo usuario registrado: biblio con rol bibliotecario | IP: 127.0.0.1 | URL: /registro/
 [08/01/2026 09:20:06] | Usuario: biblio | Acción: APROBAR | Aprobó solicitud #5 de RAHI para "The Chalk Man" | IP: 127.0.0.1 | URL: /solicitudes/5/aprobar/
 [08/01/2026 09:21:06] | Usuario: biblio | Acción: EDITAR | Devolvió libro "The Chalk Man" del préstamo #6. Estado: deterioro | IP: 127.0.0.1 | URL: /prestamos/6/devolver/
+[12/01/2026 10:27:12] | Usuario: michael | Acción: REGISTRO | Nuevo usuario registrado: michael con rol bodeguero | IP: 127.0.0.1 | URL: /registro/
+[12/01/2026 10:40:09] | Usuario: Joel | Acción: EDITAR | Devolvió libro "The Chalk Man" del préstamo #4. Estado: deterioro | IP: 127.0.0.1 | URL: /prestamos/4/devolver/
